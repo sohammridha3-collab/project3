@@ -17,4 +17,4 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        value: "*"
+        value: "https://project3-backend-fzlv.onrender.com"

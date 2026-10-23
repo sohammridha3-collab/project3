@@ -88,7 +88,10 @@
   }
 
   async function apiFetch(endpoint, options = {}) {
-    const baseUrl = (cfg && cfg.API_BASE_URL) ? cfg.API_BASE_URL.replace(/\/+$/, "") : "";
+    const defaultApiUrl = (typeof window !== "undefined" && window.API_BASE_URL)
+      ? window.API_BASE_URL
+      : "https://project3-backend-fzlv.onrender.com";
+    const baseUrl = (cfg && cfg.API_BASE_URL) ? cfg.API_BASE_URL.replace(/\/+$/, "") : defaultApiUrl;
     const url = endpoint.startsWith("http") ? endpoint : `${baseUrl}${endpoint}`;
     const token = getToken();
     const headers = {
@@ -122,7 +125,7 @@
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), (cfg && cfg.REQUEST_TIMEOUT_MS) || 30000);
+    const timeout = setTimeout(() => controller.abort(), (cfg && cfg.REQUEST_TIMEOUT_MS) || 60000);
 
     async function executeFetch(requestUrl) {
       const response = await fetch(requestUrl, {
@@ -172,44 +175,17 @@
     }
 
     try {
-      let data;
-      try {
-        data = await executeFetch(url);
-      } catch (firstErr) {
-        // If local connection refused on port 8001, automatically probe port 8000 (and vice-versa)
-        if (firstErr && !(firstErr instanceof ApiError) && firstErr.name !== "AbortError") {
-          const isLocalhost8001 = url.includes("127.0.0.1:8001") || url.includes("localhost:8001");
-          const isLocalhost8000 = url.includes("127.0.0.1:8000") || url.includes("localhost:8000");
-          if (isLocalhost8001 || isLocalhost8000) {
-            const altUrl = isLocalhost8001
-              ? url.replace(":8001", ":8000")
-              : url.replace(":8000", ":8001");
-            try {
-              data = await executeFetch(altUrl);
-              const activeAltBase = isLocalhost8001 ? "http://127.0.0.1:8000" : "http://127.0.0.1:8001";
-              if (window.SCAMSHIELD_CONFIG) {
-                window.SCAMSHIELD_CONFIG.API_BASE_URL = activeAltBase;
-              }
-              console.info(`[ScamShield AI] Auto-switched API connection to active backend at ${activeAltBase}`);
-              clearTimeout(timeout);
-              return data;
-            } catch (_) {
-              // Alt port also unreachable; fall through to error handling
-            }
-          }
-        }
-        throw firstErr;
-      }
+      const data = await executeFetch(url);
       clearTimeout(timeout);
       return data;
     } catch (err) {
       clearTimeout(timeout);
       if (err.name === "AbortError") {
-        throw new ApiError(408, "The request timed out. Please verify that the backend server is running.");
+        throw new ApiError(408, "The server took too long to respond. The Render backend may be waking up from sleep (cold start). Please wait a moment and try again.");
       }
       if (err instanceof ApiError) throw err;
-      const targetHost = baseUrl || (typeof window !== "undefined" ? window.location.origin : "");
-      throw new ApiError(0, `Cannot connect to ScamShield API at ${targetHost}. Please verify that the backend server is running and accessible.`);
+      const targetHost = baseUrl || "https://project3-backend-fzlv.onrender.com";
+      throw new ApiError(0, `Cannot connect to ScamShield API at ${targetHost}. If the Render backend is waking up, please wait a few seconds and try again.`);
     }
   }
 

@@ -175,8 +175,8 @@
           dlBtn.disabled = true;
           try {
             const endpoint = isCall
-              ? `${cfg.API_BASE_URL}/api/callscam/${r.id}/report.pdf`
-              : `${cfg.API_BASE_URL}/api/scans/${r.id}/report.pdf`;
+              ? cfg.ENDPOINTS.downloadCallReportById(r.id)
+              : cfg.ENDPOINTS.downloadReportById(r.id);
 
             const blob = await apiFetch(endpoint);
             const downloadUrl = window.URL.createObjectURL(blob);
@@ -201,7 +201,7 @@
           if (!confirm(`Are you sure you want to permanently delete ${typeName} #${r.id}?`)) return;
 
           try {
-            const delEndpoint = `${cfg.API_BASE_URL}/api/scans/${r.id}?record_type=${isCall ? "call" : "message"}`;
+            const delEndpoint = `${cfg.ENDPOINTS.deleteScan(r.id)}?record_type=${isCall ? "call" : "message"}`;
             await apiFetch(delEndpoint, { method: "DELETE" });
             toast(`Record #${r.id} deleted successfully.`, "info");
             loadHistory();
@@ -333,8 +333,8 @@
 
     try {
       const endpoint = isCall
-        ? `${cfg.API_BASE_URL}/api/callscam/${r.id}/report.pdf`
-        : `${cfg.API_BASE_URL}/api/scans/${r.id}/report.pdf`;
+        ? cfg.ENDPOINTS.downloadCallReportById(r.id)
+        : cfg.ENDPOINTS.downloadReportById(r.id);
 
       const blob = await apiFetch(endpoint);
       const downloadUrl = window.URL.createObjectURL(blob);

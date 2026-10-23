@@ -114,7 +114,7 @@
 
     try {
       const endpoint = recordType === "call"
-        ? `${cfg.API_BASE_URL}/api/callscam/${scanId}/report.pdf`
+        ? cfg.ENDPOINTS.downloadCallReportById(scanId)
         : cfg.ENDPOINTS.downloadReportById(scanId);
 
       const blob = await apiFetch(endpoint);

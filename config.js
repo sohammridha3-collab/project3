@@ -1,24 +1,32 @@
-/* Centralized Frontend Configuration for ScamShield AI */
+/* ==========================================================================
+   Centralized Frontend API Configuration for ScamShield AI
+   Deployed Render Backend: https://project3-backend-fzlv.onrender.com
+   ========================================================================== */
+
+const API_BASE_URL = "https://project3-backend-fzlv.onrender.com";
+
+// Expose globally for direct access or non-module scripts
+if (typeof window !== "undefined") {
+  window.API_BASE_URL = API_BASE_URL;
+}
+
 (function () {
   "use strict";
 
   /**
-   * Resolves the deployed FastAPI backend URL with robust priority:
-   * 1. Window global override (e.g. window.SCAMSHIELD_API_BASE_URL or window.API_BASE_URL)
+   * Resolves the active backend API base URL:
+   * 1. Window global override (e.g. window.SCAMSHIELD_API_BASE_URL)
    * 2. HTML <meta name="scamshield-api-url" content="...">
-   * 3. localStorage override (set via SCAMSHIELD_CONFIG.setBackendUrl("https://..."))
-   * 4. Automatic inference:
-   *    - file:// -> "http://127.0.0.1:8001"
-   *    - Local development (localhost / 127.0.0.1) on non-8001 port -> "http://127.0.0.1:8001"
-   *    - Full-stack production (Render, Railway, Heroku, Docker, VPS, custom domain) -> window.location.origin
-   *    - Static-only hosts (GitHub Pages, Vercel, Netlify) -> warn & fallback
+   * 3. LocalStorage persistence (set via SCAMSHIELD_CONFIG.setBackendUrl("https://..."))
+   * 4. Unified backend host detection (if static files are served directly by the backend itself)
+   * 5. Default: Deployed Render backend (API_BASE_URL)
    */
   function resolveApiBaseUrl() {
-    // 1. Window global override
+    // 1. Explicit window override
     if (typeof window.SCAMSHIELD_API_BASE_URL === "string" && window.SCAMSHIELD_API_BASE_URL.trim()) {
       return window.SCAMSHIELD_API_BASE_URL.trim().replace(/\/+$/, "");
     }
-    if (typeof window.API_BASE_URL === "string" && window.API_BASE_URL.trim()) {
+    if (typeof window.API_BASE_URL === "string" && window.API_BASE_URL.trim() && window.API_BASE_URL !== API_BASE_URL) {
       return window.API_BASE_URL.trim().replace(/\/+$/, "");
     }
 
@@ -28,7 +36,7 @@
       return metaTag.content.trim().replace(/\/+$/, "");
     }
 
-    // 3. LocalStorage persistence
+    // 3. LocalStorage override
     try {
       const storedUrl = localStorage.getItem("scamshield_api_base_url");
       if (storedUrl && storedUrl.trim()) {
@@ -36,46 +44,17 @@
       }
     } catch (_) {}
 
-    // 4. Inferred from current browser location
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    const port = window.location.port;
-
-    // Local file testing
-    if (protocol === "file:") {
-      return "http://127.0.0.1:8001";
-    }
-
-    // Local development server (e.g. VS Code Live Server on 5500, Vite on 5173, etc.)
-    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0";
-    if (isLocalhost) {
-      if (port === "8001") {
-        return window.location.origin;
+    // 4. If served directly by the backend itself (unified full-stack host on Render)
+    if (typeof window !== "undefined" && window.location && window.location.origin) {
+      const origin = window.location.origin;
+      const hostname = window.location.hostname;
+      if (origin === API_BASE_URL || hostname === "project3-backend-fzlv.onrender.com") {
+        return origin;
       }
-      return "http://127.0.0.1:8001";
     }
 
-    // Static-only hosting platforms (when frontend is deployed separately without backend)
-    const isStaticHost =
-      hostname.endsWith("github.io") ||
-      hostname.endsWith("vercel.app") ||
-      hostname.endsWith("netlify.app") ||
-      hostname.endsWith("pages.dev") ||
-      hostname.endsWith("firebaseapp.com") ||
-      hostname.endsWith("surge.sh");
-
-    if (isStaticHost) {
-      console.warn(
-        "[ScamShield AI] Running on static host (" + hostname + "). " +
-        "If requests fail, set your deployed FastAPI backend URL using: " +
-        "window.SCAMSHIELD_CONFIG.setBackendUrl('https://your-backend.onrender.com')"
-      );
-      return "";
-    }
-
-    // Default for unified full-stack deployments (Render, Railway, Heroku, Docker, custom domains)
-    // The FastAPI backend directly serves the frontend pages on the same origin.
-    return window.location.origin;
+    // 5. Default: Connect all static frontend deployments directly to the deployed Render backend
+    return API_BASE_URL;
   }
 
   const resolvedBaseUrl = resolveApiBaseUrl();
@@ -89,6 +68,11 @@
         console.info("[ScamShield AI] Backend URL set to: " + clean);
         window.location.reload();
       }
+    },
+    resetBackendUrl: function () {
+      localStorage.removeItem("scamshield_api_base_url");
+      console.info("[ScamShield AI] Reset backend URL to default: " + API_BASE_URL);
+      window.location.reload();
     },
     getBackendUrl: function () {
       return resolveApiBaseUrl();
@@ -108,17 +92,17 @@
       // User Scans & Reports
       history: "/api/scans/history",
       stats: "/api/scans/stats",
-      deleteScan: id => `/api/scans/${id}`,
+      deleteScan: function (id) { return `/api/scans/${id}`; },
       clearAllHistory: "/api/scans/clear-all",
-      downloadReportById: id => `/api/scans/${id}/report.pdf`,
+      downloadReportById: function (id) { return `/api/scans/${id}/report.pdf`; },
       downloadCustomReport: "/api/report/download",
-      // CallScam
+      // CallScam Audio AI
       callScamAnalyze: "/api/callscam/analyze",
-      downloadCallReportById: id => `/api/callscam/${id}/report.pdf`,
+      downloadCallReportById: function (id) { return `/api/callscam/${id}/report.pdf`; },
       downloadCustomCallReport: "/api/callscam/report/download",
-      deleteCallRecord: id => `/api/callscam/${id}`
+      deleteCallRecord: function (id) { return `/api/callscam/${id}`; }
     }),
-    REQUEST_TIMEOUT_MS: 30000,
+    REQUEST_TIMEOUT_MS: 60000,
     MAX_CHARS: 20000
   });
 })();
