@@ -90,7 +90,7 @@
   async function apiFetch(endpoint, options = {}) {
     const defaultApiUrl = (typeof window !== "undefined" && window.API_BASE_URL)
       ? window.API_BASE_URL
-      : "https://project3-back-y3cj.onrender.com";
+      : "https://project3-backend-fzlv.onrender.com";
     const baseUrl = (cfg && cfg.API_BASE_URL) ? cfg.API_BASE_URL.replace(/\/+$/, "") : defaultApiUrl;
     const url = endpoint.startsWith("http") ? endpoint : `${baseUrl}${endpoint}`;
     const token = getToken();
@@ -184,7 +184,7 @@
         throw new ApiError(408, "The server took too long to respond. The Render backend may be waking up from sleep (cold start). Please wait a moment and try again.");
       }
       if (err instanceof ApiError) throw err;
-      const targetHost = baseUrl || "https://project3-back-y3cj.onrender.com";
+      const targetHost = baseUrl || "https://project3-backend-fzlv.onrender.com";
       throw new ApiError(0, `Cannot connect to ScamShield API at ${targetHost}. If the Render backend is waking up, please wait a few seconds and try again.`);
     }
   }
