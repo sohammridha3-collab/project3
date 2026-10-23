@@ -6,6 +6,12 @@ import os
 from pathlib import Path
 from typing import List
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -19,11 +25,13 @@ DESCRIPTION = (
 
 # Model configuration
 MODEL_FILENAME = os.getenv("SCAM_MODEL_FILE", "scam_detection_pipeline.pkl")
-MODEL_PATH = BASE_DIR / MODEL_FILENAME
+MODEL_PATH = Path(os.getenv("MODEL_PATH", str(BASE_DIR / MODEL_FILENAME)))
+if not MODEL_PATH.is_absolute():
+    MODEL_PATH = BASE_DIR / MODEL_PATH
 
-# Server settings (override with environment variables, e.g. $env:PORT="8005")
-# Default is 8001 because port 8000 is commonly occupied by other local projects.
-HOST = os.getenv("HOST", "127.0.0.1")
+# Server settings (override with environment variables, e.g. $env:PORT="8005" or cloud $PORT)
+# Default is 0.0.0.0 to support containerized/cloud deployments (Render, Railway, Heroku, Docker).
+HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8001"))
 
 # CORS Allowed Origins
