@@ -433,6 +433,64 @@ class TestScamShieldFullStack(unittest.TestCase):
         stats_after = self.client.get("/api/scans/stats", headers=headers)
         self.assertEqual(stats_after.json()["total_scans"], 1)
 
+    def test_11_production_deployment_verification(self):
+        """Verify production clean URLs, CORS headers for cloud origins, and deployment configs."""
+        import os
+        from pathlib import Path
+
+        # 1. Verify clean URLs without .html
+        clean_routes = [
+            "/analyze",
+            "/callscam",
+            "/details",
+            "/history",
+            "/results",
+            "/dashboard",
+            "/how-it-works",
+            "/model-performance",
+            "/about",
+            "/login",
+            "/register"
+        ]
+        for route in clean_routes:
+            res = self.client.get(route)
+            self.assertEqual(res.status_code, 200, f"Clean route {route} failed with {res.status_code}")
+
+        # 2. Verify CORS headers for cloud deployment origins
+        origins_to_test = [
+            "https://scamshield.onrender.com",
+            "https://scamshield.vercel.app",
+            "https://scamshield.netlify.app",
+            "https://sohammridha3-collab.github.io"
+        ]
+        for origin in origins_to_test:
+            res_cors = self.client.options(
+                "/predict",
+                headers={
+                    "Origin": origin,
+                    "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "Content-Type"
+                }
+            )
+            self.assertEqual(
+                res_cors.headers.get("access-control-allow-origin"),
+                origin,
+                f"CORS header missing or mismatched for {origin}"
+            )
+
+        # 3. Verify deployment configuration files exist
+        base_dir = Path(__file__).resolve().parent
+        self.assertTrue((base_dir / "Procfile").is_file(), "Procfile must exist for PaaS deployment")
+        self.assertTrue((base_dir / "render.yaml").is_file(), "render.yaml must exist for Render deployment")
+        self.assertTrue((base_dir / "Dockerfile").is_file(), "Dockerfile must exist for container deployment")
+        self.assertTrue((base_dir / "runtime.txt").is_file(), "runtime.txt must exist for Python version pinning")
+        self.assertTrue((base_dir / ".gitignore").is_file(), ".gitignore must exist")
+
+        # 4. Verify Procfile contains correct start command
+        procfile_content = (base_dir / "Procfile").read_text(encoding="utf-8")
+        self.assertIn("main:app", procfile_content)
+        self.assertIn("--host 0.0.0.0", procfile_content)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

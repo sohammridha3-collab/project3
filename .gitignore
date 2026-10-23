@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables & secrets (NEVER commit secrets!)
+.env
+.env.local
+.env.*.local
+
+# SQLite local databases
+scamshield.db
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Temporary test audio & reports
+temp_call_*.wav
+scamshield_call_*.wav
+*.pdf
+
+# Operating system artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Large training datasets (already serialized in scam_detection_pipeline.pkl)
+# CEAS_08.csv/
+# SPAM_SMS.csv
+
+# IDE & Editor folders
+.vscode/
+.idea/
+*.swp

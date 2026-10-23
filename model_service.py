@@ -60,9 +60,24 @@ class ScamDetectorService:
     """
     _instance: Optional["ScamDetectorService"] = None
 
-    def __init__(self, model_filename: str = "scam_detection_pipeline.pkl"):
+    def __init__(self, model_filename: Optional[str] = None):
         self.base_dir = Path(__file__).resolve().parent
-        self.model_path = self.base_dir / model_filename
+        
+        # Priority: explicit argument -> config.MODEL_PATH -> default file
+        try:
+            from config import MODEL_PATH, MODEL_DOWNLOAD_URL
+            default_path = MODEL_PATH
+            self.download_url = MODEL_DOWNLOAD_URL
+        except ImportError:
+            default_path = self.base_dir / (model_filename or "scam_detection_pipeline.pkl")
+            self.download_url = os.getenv("MODEL_DOWNLOAD_URL") or os.getenv("MODEL_URL")
+
+        if model_filename:
+            p = Path(model_filename)
+            self.model_path = p if p.is_absolute() else (self.base_dir / p)
+        else:
+            self.model_path = default_path
+
         self.metadata_path = self.base_dir / "model_metadata.json"
         self.metrics_path = self.base_dir / "heldout_test_metrics.csv"
         self.cv_path = self.base_dir / "cross_validation_comparison.csv"
@@ -75,10 +90,48 @@ class ScamDetectorService:
         self.load_timestamp: Optional[float] = None
 
     @classmethod
-    def get_instance(cls, model_filename: str = "scam_detection_pipeline.pkl") -> "ScamDetectorService":
+    def get_instance(cls, model_filename: Optional[str] = None) -> "ScamDetectorService":
         if cls._instance is None:
             cls._instance = cls(model_filename)
         return cls._instance
+
+    def _download_model_artifact(self) -> None:
+        """Downloads model artifact if missing locally and remote URL is configured."""
+        if self.model_path.exists():
+            return
+
+        dl_url = self.download_url or os.getenv("MODEL_DOWNLOAD_URL") or os.getenv("MODEL_URL")
+        if not dl_url:
+            return
+
+        logger.info(f"Model file not found locally. Initiating artifact download from {dl_url}...")
+        self.model_path.parent.mkdir(parents=True, exist_ok=True)
+        temp_file = self.model_path.with_suffix(".download.tmp")
+        try:
+            import urllib.request
+            req = urllib.request.Request(
+                dl_url,
+                headers={"User-Agent": "ScamShieldAI-ModelFetcher/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=120) as resp, open(temp_file, "wb") as f_out:
+                if resp.status not in (200, 206):
+                    raise ModelLoadError(f"Model download failed with HTTP status {resp.status}")
+                while True:
+                    chunk = resp.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    f_out.write(chunk)
+
+            size_bytes = temp_file.stat().st_size
+            if size_bytes < 100000:
+                raise ModelLoadError(f"Downloaded model artifact too small ({size_bytes} bytes). Check URL validity.")
+
+            temp_file.replace(self.model_path)
+            logger.info(f"✅ Downloaded model artifact successfully ({size_bytes} bytes) to {self.model_path}")
+        except Exception as exc:
+            if temp_file.exists():
+                temp_file.unlink()
+            raise ModelLoadError(f"Automatic model artifact download failed: {exc}") from exc
 
     def load_model(self) -> None:
         """
@@ -86,9 +139,13 @@ class ScamDetectorService:
         Validates pipeline structure to ensure it's compatible with prediction calls.
         """
         if not self.model_path.exists():
+            self._download_model_artifact()
+
+        if not self.model_path.exists():
             error_msg = (
                 f"Model file not found at expected path: {self.model_path}. "
-                "Ensure 'scam_detection_pipeline.pkl' is located in the backend root directory."
+                "Ensure 'scam_detection_pipeline.pkl' is committed to the repository root, "
+                "mounted via persistent volume (MODEL_PATH), or configure MODEL_DOWNLOAD_URL."
             )
             logger.critical(error_msg)
             raise ModelLoadError(error_msg)

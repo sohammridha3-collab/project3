@@ -21,7 +21,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, or_
 
 
-from config import PROJECT_TITLE, API_VERSION, DESCRIPTION, CORS_ORIGINS, HOST, PORT, BASE_DIR
+import tempfile
+
+from config import PROJECT_TITLE, API_VERSION, DESCRIPTION, CORS_ORIGINS, HOST, PORT, BASE_DIR, IS_PRODUCTION
 from database import get_db, init_db
 from db_models import User, ScanRecord, CallScanRecord
 from auth_utils import (
@@ -92,14 +94,23 @@ app = FastAPI(
 )
 
 # Configure CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+cors_origins_to_use = CORS_ORIGINS
+cors_has_wildcard = "*" in cors_origins_to_use
+
+cors_kwargs: Dict[str, Any] = {
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+}
+
+if cors_has_wildcard:
+    cors_kwargs["allow_origins"] = ["*"]
+    cors_kwargs["allow_credentials"] = False
+else:
+    cors_kwargs["allow_origins"] = cors_origins_to_use
+    cors_kwargs["allow_credentials"] = True
+    cors_kwargs["allow_origin_regex"] = r"https?://(localhost|127\.0\.0\.1|.*\.onrender\.com|.*\.railway\.app|.*\.vercel\.app|.*\.netlify\.app|.*\.github\.io)(:\d+)?"
+
+app.add_middleware(CORSMiddleware, **cors_kwargs)
 
 
 # Exception Handlers
@@ -645,7 +656,8 @@ async def analyze_call_recording(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve))
 
     temp_id = str(uuid.uuid4())
-    temp_path = BASE_DIR / f"temp_call_{temp_id}.wav"
+    temp_dir = Path(tempfile.gettempdir())
+    temp_path = temp_dir / f"scamshield_call_{temp_id}.wav"
 
     try:
         with open(temp_path, "wb") as f:
@@ -863,6 +875,12 @@ async def serve_static_assets(file_path: str):
     
     if target.is_file():
         return FileResponse(target)
+
+    # Support clean URLs without .html extension (e.g. /analyze, /callscam, /results, /history, /dashboard)
+    html_target = BASE_DIR / f"{file_path}.html"
+    if html_target.is_file():
+        return FileResponse(html_target)
+
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found")
 
 
@@ -881,7 +899,8 @@ if __name__ == "__main__":
     import sys
     import uvicorn
 
-    if not _port_is_free(HOST, PORT):
+    # In production (Render, Railway, Heroku, Docker), don't fail on socket probe and disable auto-reload
+    if not IS_PRODUCTION and not _port_is_free(HOST, PORT):
         logger.error(
             f"Port {PORT} on {HOST} is already in use by another program. "
             f"Stop that program, or choose another port, e.g. in PowerShell:  "
@@ -889,5 +908,6 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
-    logger.info(f"Starting local Uvicorn development server on http://{HOST}:{PORT} ...")
-    uvicorn.run("main:app", host=HOST, port=PORT, reload=True)
+    reload_flag = not IS_PRODUCTION and os.getenv("RELOAD", "false").lower() == "true"
+    logger.info(f"Starting Uvicorn server on http://{HOST}:{PORT} (reload={reload_flag}, prod={IS_PRODUCTION}) ...")
+    uvicorn.run("main:app", host=HOST, port=PORT, reload=reload_flag)

@@ -23,11 +23,21 @@ DESCRIPTION = (
     "Classifies SMS and Email messages using a trained scikit-learn FeatureUnion TF-IDF and LinearSVC pipeline."
 )
 
+# Environment detection
+IS_PRODUCTION = (
+    os.getenv("ENVIRONMENT", "").lower() in ("production", "prod")
+    or bool(os.getenv("RENDER") or os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("DYNO"))
+)
+DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
+
 # Model configuration
 MODEL_FILENAME = os.getenv("SCAM_MODEL_FILE", "scam_detection_pipeline.pkl")
 MODEL_PATH = Path(os.getenv("MODEL_PATH", str(BASE_DIR / MODEL_FILENAME)))
 if not MODEL_PATH.is_absolute():
     MODEL_PATH = BASE_DIR / MODEL_PATH
+
+# Optional remote model artifact download URL (if model is hosted on S3, HuggingFace, R2, or GitHub release)
+MODEL_DOWNLOAD_URL = os.getenv("MODEL_DOWNLOAD_URL") or os.getenv("MODEL_URL")
 
 # Server settings (override with environment variables, e.g. $env:PORT="8005" or cloud $PORT)
 # Default is 0.0.0.0 to support containerized/cloud deployments (Render, Railway, Heroku, Docker).

@@ -88,7 +88,8 @@
   }
 
   async function apiFetch(endpoint, options = {}) {
-    const url = endpoint.startsWith("http") ? endpoint : `${cfg.API_BASE_URL}${endpoint}`;
+    const baseUrl = (cfg && cfg.API_BASE_URL) ? cfg.API_BASE_URL.replace(/\/+$/, "") : "";
+    const url = endpoint.startsWith("http") ? endpoint : `${baseUrl}${endpoint}`;
     const token = getToken();
     const headers = {
       ...(options.headers || {})
@@ -121,7 +122,7 @@
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), cfg.REQUEST_TIMEOUT_MS);
+    const timeout = setTimeout(() => controller.abort(), (cfg && cfg.REQUEST_TIMEOUT_MS) || 30000);
 
     try {
       const response = await fetch(url, {
@@ -176,7 +177,8 @@
         throw new ApiError(408, "The request timed out. Please verify that the backend server is running.");
       }
       if (err instanceof ApiError) throw err;
-      throw new ApiError(0, `Cannot connect to server at ${cfg.API_BASE_URL}. Ensure FastAPI is started on port 8001.`);
+      const targetHost = baseUrl || (typeof window !== "undefined" ? window.location.origin : "");
+      throw new ApiError(0, `Cannot connect to ScamShield API at ${targetHost}. Please verify that the backend server is running and accessible.`);
     }
   }
 

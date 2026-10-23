@@ -18,13 +18,27 @@ DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'scamshield.db'
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Connect args (check_same_thread needed for SQLite)
-connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+# Connect args & engine options
+is_sqlite = DATABASE_URL.startswith("sqlite")
+connect_args = {"check_same_thread": False} if is_sqlite else {}
+
+engine_kwargs = {
+    "connect_args": connect_args,
+    "echo": False
+}
+
+if not is_sqlite:
+    # Production PostgreSQL resilience: pool pre-ping avoids stale dropped connections
+    engine_kwargs.update({
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+        "pool_size": 5,
+        "max_overflow": 10
+    })
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args=connect_args,
-    echo=False
+    **engine_kwargs
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
