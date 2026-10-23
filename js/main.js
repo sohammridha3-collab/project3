@@ -124,15 +124,13 @@
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), (cfg && cfg.REQUEST_TIMEOUT_MS) || 30000);
 
-    try {
-      const response = await fetch(url, {
+    async function executeFetch(requestUrl) {
+      const response = await fetch(requestUrl, {
         ...options,
         headers,
         body,
         signal: controller.signal
       });
-
-      clearTimeout(timeout);
 
       // Handle binary responses (e.g. PDF downloads)
       const contentType = response.headers.get("content-type") || "";
@@ -170,6 +168,39 @@
         throw new ApiError(response.status, detail);
       }
 
+      return data;
+    }
+
+    try {
+      let data;
+      try {
+        data = await executeFetch(url);
+      } catch (firstErr) {
+        // If local connection refused on port 8001, automatically probe port 8000 (and vice-versa)
+        if (firstErr && !(firstErr instanceof ApiError) && firstErr.name !== "AbortError") {
+          const isLocalhost8001 = url.includes("127.0.0.1:8001") || url.includes("localhost:8001");
+          const isLocalhost8000 = url.includes("127.0.0.1:8000") || url.includes("localhost:8000");
+          if (isLocalhost8001 || isLocalhost8000) {
+            const altUrl = isLocalhost8001
+              ? url.replace(":8001", ":8000")
+              : url.replace(":8000", ":8001");
+            try {
+              data = await executeFetch(altUrl);
+              const activeAltBase = isLocalhost8001 ? "http://127.0.0.1:8000" : "http://127.0.0.1:8001";
+              if (window.SCAMSHIELD_CONFIG) {
+                window.SCAMSHIELD_CONFIG.API_BASE_URL = activeAltBase;
+              }
+              console.info(`[ScamShield AI] Auto-switched API connection to active backend at ${activeAltBase}`);
+              clearTimeout(timeout);
+              return data;
+            } catch (_) {
+              // Alt port also unreachable; fall through to error handling
+            }
+          }
+        }
+        throw firstErr;
+      }
+      clearTimeout(timeout);
       return data;
     } catch (err) {
       clearTimeout(timeout);
