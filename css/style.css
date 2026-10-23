@@ -333,6 +333,7 @@ a:hover { color: #FFFFFF; }
   margin-bottom: 1.2rem;
   background: linear-gradient(to right, #FFFFFF, #E2E8F0);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 

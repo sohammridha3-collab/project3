@@ -86,6 +86,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       letter-spacing: -0.02em;
       background: linear-gradient(to right, #ffffff, #cbd5e1);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
