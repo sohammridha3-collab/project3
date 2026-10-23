@@ -1,0 +1,17 @@
+{
+  "selected_model": "Linear SVM",
+  "target_column": "label",
+  "label_names": {
+    "0": "label_0 (verify meaning)",
+    "1": "label_1 (verify meaning)"
+  },
+  "positive_label_for_metrics": 1,
+  "training_dataset": "CEAS_08.csv",
+  "text_fields": [
+    "subject",
+    "body"
+  ],
+  "selection_metric": "mean 3-fold training CV F1 for label 1",
+  "random_seed": 42,
+  "note": "Verify dataset label semantics. Spam is not necessarily verified scam."
+}

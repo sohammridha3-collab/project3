@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How It Works · ScamShield AI</title>
+  <meta name="description" content="Technical architecture, data preprocessing, TF-IDF feature union, and LinearSVC classification pipeline.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header" id="site-header"></header>
+
+  <main id="main">
+    <div class="page-header">
+      <div class="wrap">
+        <h1>Machine Learning Pipeline Architecture</h1>
+        <p>An end-to-end look at how messages travel from client submission to vectorization, classification, score calibration, and threat explanation.</p>
+      </div>
+    </div>
+
+    <!-- Visual Pipeline Architecture -->
+    <section class="block">
+      <div class="wrap">
+        <div class="block-title">
+          <h2>The 6-Stage Detection Flow</h2>
+          <p>Every message undergoes high-dimensional feature projection and hyperplane evaluation in less than 20 milliseconds.</p>
+        </div>
+
+        <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+          
+          <div class="card tilt">
+            <div class="card-icon" style="background:rgba(59,130,246,0.15); color:var(--blue);">01</div>
+            <h3>Data Ingestion & Formatting</h3>
+            <p style="font-size:0.9rem;">
+              The incoming payload is sanitized and bounded to 20,000 characters. For email communications, the subject and body are formatted as:
+              <code>SUBJECT: &lt;subject&gt; BODY: &lt;body&gt;</code>, preserving the contextual semantics learned during model training.
+            </p>
+          </div>
+
+          <div class="card tilt">
+            <div class="card-icon" style="background:rgba(34,211,238,0.15); color:var(--cyan);">02</div>
+            <h3>Dual Feature Extraction</h3>
+            <p style="font-size:0.9rem;">
+              A scikit-learn <code>FeatureUnion</code> extracts 120,000 sparse numerical features simultaneously:
+              <br/>• <strong>Word TF-IDF</strong> (1–2 n-grams, 80k features) for semantic phrasing.
+              <br/>• <strong>Character TF-IDF</strong> (3–5 n-grams, 40k features) for typos, obscured words, and URLs.
+            </p>
+          </div>
+
+          <div class="card tilt">
+            <div class="card-icon" style="background:rgba(20,184,166,0.15); color:var(--teal);">03</div>
+            <h3>LinearSVC Hyperplane Separation</h3>
+            <p style="font-size:0.9rem;">
+              Selected as the winning classifier via stratified cross-validation over Naive Bayes and Logistic Regression.
+              The model evaluates the dot product <strong>z = w · x + b</strong> to establish on which side of the decision boundary the message falls.
+            </p>
+          </div>
+
+          <div class="card tilt">
+            <div class="card-icon" style="background:rgba(245,158,11,0.15); color:var(--warn);">04</div>
+            <h3>Platt Sigmoid Score Calibration</h3>
+            <p style="font-size:0.9rem;">
+              Because Support Vector Classifiers output geometric distance margins rather than direct probabilities, 
+              we apply a logistic sigmoid transformation:
+              <code style="display:block; margin-top:0.4rem; padding:0.4rem; background:rgba(0,0,0,0.3); border-radius:6px;">P(scam) = 1 / (1 + e^(-z))</code>
+              mapping the signed margin into a transparent 0% to 100% likelihood gauge.
+            </p>
+          </div>
+
+          <div class="card tilt">
+            <div class="card-icon" style="background:rgba(239,68,68,0.15); color:var(--scam);">05</div>
+            <h3>Supplementary Heuristics</h3>
+            <p style="font-size:0.9rem;">
+              To provide human-interpretable explanations during security reviews, regular-expression rules scan for classic social-engineering cues:
+              urgency language, monetary prizes, password harvesting, and link shorteners.
+            </p>
+          </div>
+
+          <div class="card tilt">
+            <div class="card-icon" style="background:rgba(16,185,129,0.15); color:var(--safe);">06</div>
+            <h3>Encrypted Persistence & Audit PDF</h3>
+            <p style="font-size:0.9rem;">
+              If the request originates from an authenticated user, the scan is linked to their profile in SQLite/PostgreSQL with server-side authorization.
+              An executive-level PDF report can be downloaded instantly.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Deep Dive Technical Accordions / Cards -->
+    <section class="block" style="background:var(--navy-surface); border-top:1px solid var(--navy-border); border-bottom:1px solid var(--navy-border);">
+      <div class="wrap">
+        <div class="block-title">
+          <h2>Dataset & Model Selection Details</h2>
+          <p>Scientific rigor behind the training and selection of the final production pipeline.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem;">
+          
+          <div class="card">
+            <h3>Training Corpus: CEAS 2008</h3>
+            <p style="font-size:0.9rem;">
+              The pipeline was trained on the benchmark <strong>CEAS 2008 Email Dataset</strong> containing <strong>39,154 verified records</strong>:
+            </p>
+            <ul style="color:var(--text-muted); font-size:0.9rem; padding-left:1.25rem; margin-bottom:1rem; line-height:1.8;">
+              <li><strong>21,842 spam / phishing emails</strong> (Label 1)</li>
+              <li><strong>17,312 legitimate ham emails</strong> (Label 0)</li>
+              <li>Stratified 80/20 train-test split with fixed random seed (42)</li>
+              <li>Exact duplicate content removed to prevent leakage across folds</li>
+            </ul>
+            <p style="font-size:0.85rem; color:var(--text-dim);">
+              Note: Spam is not identical to verified fraud; the model flags suspicious communication patterns that share structural markers with unwanted or deceptive solicitations.
+            </p>
+          </div>
+
+          <div class="card">
+            <h3>Model Comparison Benchmark</h3>
+            <p style="font-size:0.9rem;">
+              Three candidate architectures were evaluated using cross-validation on the extracted TF-IDF feature space:
+            </p>
+            <div class="table-responsive">
+              <table class="data-table" style="font-size:0.85rem;">
+                <thead>
+                  <tr>
+                    <th>Model</th>
+                    <th>Mean CV Accuracy</th>
+                    <th>Mean CV F1</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="background:rgba(59,130,246,0.1);">
+                    <td><strong>LinearSVC (Selected)</strong></td>
+                    <td style="color:#34D399; font-weight:700;">99.70%</td>
+                    <td style="color:#34D399; font-weight:700;">99.73%</td>
+                  </tr>
+                  <tr>
+                    <td>Logistic Regression</td>
+                    <td>99.45%</td>
+                    <td>99.51%</td>
+                  </tr>
+                  <tr>
+                    <td>Multinomial Naive Bayes</td>
+                    <td>97.53%</td>
+                    <td>97.74%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-dim); margin-top:0.75rem;">
+              SVMs excel in high-dimensional text feature spaces because they optimize the structural margin rather than minimizing training cross-entropy alone.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Boundary Conditions & Responsible Use -->
+    <section class="block">
+      <div class="wrap" style="max-width:850px; margin:auto;">
+        <div class="card" style="border-left:4px solid var(--teal);">
+          <h3 style="color:var(--cyan);">Limitations & Responsible AI Disclosures</h3>
+          <p style="font-size:0.92rem; line-height:1.7;">
+            <strong>Domain Shift Caution:</strong> The model was trained on email text. When applied to brief, informal SMS messages (such as casual conversations), the lack of standard email framing can occasionally result in false alarms.
+          </p>
+          <p style="font-size:0.92rem; line-height:1.7; margin-bottom:0;">
+            <strong>Statistical Estimate, Not Legal Proof:</strong> AI text classification is an empirical signal to assist human judgment. Never authorize banking transfers, disclose OTPs, or reset passwords based solely on unverified communications.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

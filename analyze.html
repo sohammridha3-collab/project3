@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analyze Message · ScamShield AI</title>
+  <meta name="description" content="Screen incoming SMS and email communications against trained machine learning threat models.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header" id="site-header"></header>
+
+  <main id="main">
+    <div class="page-header">
+      <div class="wrap">
+        <h1>Message Threat Screening</h1>
+        <p>Analyze incoming emails and SMS messages using our scikit-learn LinearSVC pipeline and explainable heuristic detection.</p>
+      </div>
+    </div>
+
+    <section class="block">
+      <div class="wrap">
+        <div class="workspace-grid">
+          
+          <!-- Left Column: Input Form -->
+          <div class="card tilt">
+            <h3 style="margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
+              <span>Message Input</span>
+              <span style="font-size:0.8rem; color:var(--cyan); font-weight:normal;">TF-IDF Pipeline</span>
+            </h3>
+
+            <!-- Message Type Selector -->
+            <div class="type-selector">
+              <button type="button" class="type-btn active" id="type-sms" data-type="sms">📱 SMS Message</button>
+              <button type="button" class="type-btn" id="type-email" data-type="email">✉️ Email Message</button>
+            </div>
+
+            <!-- Quick Presets -->
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.4rem; font-weight:600; text-transform:uppercase;">Quick Presets:</div>
+            <div class="preset-chips">
+              <span class="chip" data-sample="bank">🚨 Bank Phishing</span>
+              <span class="chip" data-sample="lottery">🎁 $1M Lottery Lure</span>
+              <span class="chip" data-sample="work">💼 Work Meeting (Ham)</span>
+              <span class="chip" data-sample="sms">💬 Casual SMS (Ham)</span>
+            </div>
+
+            <form id="analyze-form" novalidate>
+              <!-- Optional Subject line for Email mode -->
+              <div class="form-group" id="subject-group" style="display:none;">
+                <label class="form-label" for="msg-subject">Email Subject</label>
+                <input type="text" id="msg-subject" placeholder="e.g. URGENT: Security Alert regarding your bank account">
+              </div>
+
+              <!-- Message Body -->
+              <div class="form-group">
+                <label class="form-label" for="msg-body">Message Content</label>
+                <textarea id="msg-body" rows="8" placeholder="Paste incoming SMS text, email body, or suspicious notification here..."></textarea>
+                <div class="form-tools">
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-paste">📋 Paste Clipboard</button>
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-clear">🗑️ Clear</button>
+                  <span class="char-counter" id="char-counter">0 / 20000</span>
+                </div>
+              </div>
+
+              <div id="analyze-error" class="form-error" hidden role="alert"></div>
+
+              <button type="submit" id="btn-analyze" class="btn btn-primary" style="width:100%; margin-top:0.5rem;">
+                <span id="btn-analyze-text">Scan Message with AI Pipeline</span>
+              </button>
+
+              <p style="font-size:0.82rem; color:var(--text-dim); margin-top:1rem; margin-bottom:0;">
+                🔒 <strong>Privacy Policy:</strong> Message content is transmitted securely to your local FastAPI backend. When logged in, scans are stored in your private history.
+              </p>
+            </form>
+          </div>
+
+          <!-- Right Column: Live Result Panel -->
+          <div>
+            <!-- Placeholder before analysis -->
+            <div class="card" id="result-placeholder" style="text-align:center; padding:3.5rem 1.5rem;">
+              <div style="font-size:3rem; margin-bottom:1rem; opacity:0.6;">🔍</div>
+              <h3>Your analysis result will appear here.</h3>
+              <p style="max-width:38ch; margin:0.5rem auto 1.5rem; font-size:0.92rem; color:var(--text-muted);">
+                Select a preset chip on the left or paste your incoming message, then click <strong>Scan Message with AI Pipeline</strong>.
+              </p>
+              <div style="font-size:0.82rem; color:var(--text-dim); border-top:1px solid var(--navy-border); padding-top:1.25rem;">
+                Trained Architecture: <strong>FeatureUnion (Word + Char TF-IDF) + LinearSVC</strong>
+              </div>
+            </div>
+
+            <!-- Scanning in Progress Animation -->
+            <div class="card scanning-card" id="result-scanning" style="display:none;">
+              <div class="scanning-radar">
+                <div class="scanning-radar-sweep"></div>
+                <span style="font-size:1.5rem; z-index:2;">🛡️</span>
+              </div>
+              <h3 style="color:#93C5FD; margin-bottom:0.5rem;">Analyzing Message Content</h3>
+              <p style="font-size:0.88rem; color:var(--text-dim); max-width:32ch; margin:0 auto;">
+                Vectorizing tokens through 120,000 TF-IDF features and projecting onto LinearSVC hyperplane...
+              </p>
+              <div class="scanning-bar-wrap">
+                <div class="scanning-bar-fill"></div>
+              </div>
+              <span style="font-size:0.75rem; font-family:var(--font-mono); color:var(--cyan);">Inference in progress</span>
+            </div>
+
+            <!-- Error State Card -->
+            <div class="card error-card" id="result-error" style="display:none;">
+              <div class="error-icon">⚠️</div>
+              <h3 id="res-error-title">Analysis Request Failed</h3>
+              <p id="res-error-message">Unable to complete message screening with the ML pipeline.</p>
+              <button type="button" class="btn btn-ghost btn-sm" id="btn-retry-analyze">
+                🔄 Try Again
+              </button>
+            </div>
+
+            <!-- Dynamic Result Card -->
+            <div class="card" id="result-card" style="display:none;">
+              <h3 style="margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center;">
+                <span>Threat Classification</span>
+                <span id="res-latency" style="font-size:0.8rem; font-family:var(--font-mono); color:var(--text-dim);"></span>
+              </h3>
+
+              <!-- Verdict Banner -->
+              <div class="verdict-box" id="res-banner">
+                <div class="verdict-icon" id="res-icon">⚠️</div>
+                <div>
+                  <div class="verdict-title" id="res-title">Scam / Suspicious</div>
+                  <div class="verdict-sub" id="res-subtitle">Flagged by linear classification hyperplane</div>
+                </div>
+              </div>
+
+              <!-- Score Meter -->
+              <div class="meter-wrapper">
+                <div class="meter-labels">
+                  <span>Threat Likelihood Score</span>
+                  <span id="res-score-pct" style="font-family:var(--font-mono); font-weight:700;">--%</span>
+                </div>
+                <div class="meter-track">
+                  <div class="meter-fill" id="res-meter-fill" style="width:0%;"></div>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">
+                  * Calibrated using Platt logistic sigmoid: σ(z) = 1 / (1 + e<sup>-z</sup>)
+                </div>
+              </div>
+
+              <!-- Technical Tiles -->
+              <div class="metrics-2col">
+                <div class="metric-tile">
+                  <div class="k">Decision Margin (z)</div>
+                  <div class="v" id="res-margin">0.00</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Risk Classification</div>
+                  <div class="v" id="res-risk" style="font-size:1.05rem;">HIGH_RISK</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Pipeline Label</div>
+                  <div class="v" id="res-label">1</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Character Count</div>
+                  <div class="v" id="res-chars">0</div>
+                </div>
+              </div>
+
+              <!-- Indicators Box -->
+              <div class="indicators-wrap">
+                <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; color:var(--text-dim);">
+                  Explainable Warning Indicators Detected
+                </div>
+                <div class="indicators-list" id="res-indicators">
+                  <span class="tag-badge">None detected</span>
+                </div>
+              </div>
+
+              <!-- Safety Recommendations Checklist -->
+              <div class="safety-checklist" id="safety-recommendations">
+                <div class="safety-checklist-title">🛡️ Defense & Safety Guidance</div>
+                <div id="safety-items">
+                  <!-- Dynamically populated based on verdict -->
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem;">
+                <button type="button" class="btn btn-primary btn-sm" id="btn-download-pdf">
+                  📄 Download Official PDF Report
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-scan-again">
+                  🔄 Analyze Another Message
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+  <script src="config.js?v=3.1"></script>
+  <script src="main.js?v=3.1"></script>
+  <script src="analyze.js?v=3.1"></script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create Account · ScamShield AI</title>
+  <meta name="description" content="Register for a free ScamShield AI account to screen messages, save scan logs, and download audit reports.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header" id="site-header"></header>
+
+  <main id="main">
+    <div class="wrap">
+      <div class="auth-panel card tilt">
+        <div class="auth-header">
+          <div class="card-icon" style="margin:0 auto 1rem;">🛡️</div>
+          <h1>Create Your Account</h1>
+          <p>Join ScamShield AI for intelligent scam detection, personal audit history, and downloadable PDF reports.</p>
+        </div>
+
+        <div id="auth-error" class="form-error" hidden role="alert"></div>
+
+        <form id="register-form">
+          <div class="form-group">
+            <label class="form-label" for="reg-fullname">Full Name</label>
+            <input type="text" id="reg-fullname" required placeholder="Alex Morgan" autocomplete="name">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Email Address</label>
+            <input type="email" id="reg-email" required placeholder="alex@company.com" autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Password</label>
+            <div class="input-wrapper">
+              <input type="password" id="reg-password" required placeholder="Min. 8 characters with upper & number" autocomplete="new-password">
+              <button type="button" class="input-btn-eye" data-target="reg-password" aria-label="Toggle password visibility">👁️</button>
+            </div>
+            <div class="strength-meter">
+              <div class="strength-bar">
+                <div id="strength-fill" class="strength-fill"></div>
+              </div>
+              <div id="strength-label" class="strength-label">Enter at least 8 characters</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reg-confirm">Confirm Password</label>
+            <div class="input-wrapper">
+              <input type="password" id="reg-confirm" required placeholder="Re-enter your password" autocomplete="new-password">
+              <button type="button" class="input-btn-eye" data-target="reg-confirm" aria-label="Toggle password visibility">👁️</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:1rem;">
+            <label style="display:flex; align-items:flex-start; gap:0.6rem; cursor:pointer; color:var(--text-muted); font-size:0.85rem; font-weight:normal; text-transform:none;">
+              <input type="checkbox" id="reg-terms" required style="width:auto; margin-top:0.25rem;">
+              <span>I acknowledge that model outputs are statistical predictions and agree to use ScamShield AI responsibly for message screening.</span>
+            </label>
+          </div>
+
+          <button type="submit" id="reg-submit-btn" class="btn btn-primary" style="width:100%; margin-top:0.5rem;">
+            <span>Create Free Account</span>
+          </button>
+        </form>
+
+        <div style="text-align:center; margin-top:1.5rem; font-size:0.9rem; color:var(--text-muted);">
+          Already have an account? <a href="login.html" style="font-weight:600; color:var(--cyan);">Sign in here</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About & Help · ScamShield AI</title>
+  <meta name="description" content="Project objectives, cybersecurity architecture, technical limitations, and safe messaging practices.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header" id="site-header"></header>
+
+  <main id="main">
+    <div class="page-header">
+      <div class="wrap">
+        <h1>About ScamShield AI</h1>
+        <p>A B.Tech Computer Science & Engineering machine learning capstone project designed as a zero-trust threat screening system.</p>
+      </div>
+    </div>
+
+    <section class="block">
+      <div class="wrap" style="max-width:960px;">
+        
+        <!-- Project Objectives -->
+        <div class="card" style="margin-bottom:2rem;">
+          <div class="card-icon">🎯</div>
+          <h2>Project Objectives</h2>
+          <p style="font-size:0.95rem; line-height:1.7;">
+            With the rapid proliferation of smishing (SMS phishing) and targeted social engineering attacks, traditional keyword filters fall short. 
+            <strong>ScamShield AI</strong> addresses this challenge through three core objectives:
+          </p>
+          <ul style="color:var(--text-muted); font-size:0.92rem; padding-left:1.25rem; line-height:1.8;">
+            <li><strong>Automated NLP Threat Detection:</strong> Classify incoming digital text communications using a trained dual-representation TF-IDF and Linear Support Vector Classifier pipeline.</li>
+            <li><strong>Interpretable Explainability:</strong> Pair statistical model predictions with transparent heuristic warning indicators (urgency cues, prize lures, credential harvesting patterns) to educate non-technical users.</li>
+            <li><strong>Production-Grade Engineering:</strong> Expose a secure, modular FastAPI REST backend with relational persistence (SQLite/PostgreSQL), user-isolated history, and downloadable executive audit PDF reports.</li>
+          </ul>
+        </div>
+
+        <!-- Technology Stack -->
+        <div class="card" style="margin-bottom:2rem;">
+          <div class="card-icon">💻</div>
+          <h2>Technology Stack</h2>
+          <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top:1.25rem;">
+            <div class="metric-tile">
+              <div class="k">Machine Learning</div>
+              <div style="font-weight:700; color:#FFFFFF; margin-top:0.25rem;">scikit-learn & joblib</div>
+              <div style="font-size:0.78rem; color:var(--text-dim); margin-top:2px;">LinearSVC + FeatureUnion</div>
+            </div>
+            <div class="metric-tile">
+              <div class="k">Backend Engine</div>
+              <div style="font-weight:700; color:#FFFFFF; margin-top:0.25rem;">Python & FastAPI</div>
+              <div style="font-size:0.78rem; color:var(--text-dim); margin-top:2px;">Uvicorn, Pydantic v2, CORS</div>
+            </div>
+            <div class="metric-tile">
+              <div class="k">Persistence & Auth</div>
+              <div style="font-weight:700; color:#FFFFFF; margin-top:0.25rem;">SQLite / PostgreSQL</div>
+              <div style="font-size:0.78rem; color:var(--text-dim); margin-top:2px;">SQLAlchemy, PBKDF2 & JWT</div>
+            </div>
+            <div class="metric-tile">
+              <div class="k">Frontend Interface</div>
+              <div style="font-weight:700; color:#FFFFFF; margin-top:0.25rem;">Vanilla HTML5, CSS3 & JS</div>
+              <div style="font-size:0.78rem; color:var(--text-dim); margin-top:2px;">Zero build step, 3D CSS Scene</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Limitations & Domain Shift -->
+        <div class="card" style="margin-bottom:2rem; border-left:4px solid var(--warn);">
+          <div class="card-icon" style="background:rgba(245,158,11,0.15); color:var(--warn);">⚠️</div>
+          <h2>System Limitations & Boundary Conditions</h2>
+          <p style="font-size:0.92rem; line-height:1.7;">
+            Honesty about boundary conditions is a hallmark of good engineering. Evaluators and users should note:
+          </p>
+          <ul style="color:var(--text-muted); font-size:0.9rem; padding-left:1.25rem; line-height:1.7;">
+            <li><strong>Email vs. SMS Generalization:</strong> The model was trained on the CEAS 2008 Email dataset. While feature union includes character n-grams to catch obfuscation, very brief informal SMS messages (under 15 words) may occasionally receive higher false-positive rates due to the lack of formal headers.</li>
+            <li><strong>Zero-Day Scam Novelty:</strong> The model evaluates statistical similarity to known attack patterns. Novel attack vectors or messages generated using advanced LLMs can bypass surface pattern matching.</li>
+            <li><strong>Language Limitation:</strong> The current model pipeline is tuned for English text communications.</li>
+          </ul>
+        </div>
+
+        <!-- Frequently Asked Questions (FAQ) -->
+        <div class="card" style="margin-bottom:2rem;">
+          <div class="card-icon">❓</div>
+          <h2>Frequently Asked Questions</h2>
+          <div style="display:flex; flex-direction:column; gap:1.25rem; margin-top:1.25rem;">
+            
+            <div style="background:rgba(0,0,0,0.25); border:1px solid var(--navy-border); border-radius:12px; padding:1.25rem;">
+              <h4 style="color:var(--cyan); margin-bottom:0.5rem;">How is the model score calculated if LinearSVC has no predict_proba?</h4>
+              <p style="font-size:0.88rem; margin:0;">
+                Linear Support Vector Classifiers output a signed geometric decision margin (distance to the separating hyperplane). 
+                We apply a <strong>Platt logistic sigmoid calibration</strong>: <code>P = 1 / (1 + e^-z)</code> to provide a scaled 0% to 100% confidence gauge.
+              </p>
+            </div>
+
+            <div style="background:rgba(0,0,0,0.25); border:1px solid var(--navy-border); border-radius:12px; padding:1.25rem;">
+              <h4 style="color:var(--cyan); margin-bottom:0.5rem;">Where are my scanned messages stored?</h4>
+              <p style="font-size:0.88rem; margin:0;">
+                If you use the guest scan on the Analyze page without logging in, the text is processed in memory and discarded immediately. 
+                If you are logged into your account, the record is stored securely in your private SQLite/PostgreSQL archive, accessible only by your authenticated token.
+              </p>
+            </div>
+
+            <div style="background:rgba(0,0,0,0.25); border:1px solid var(--navy-border); border-radius:12px; padding:1.25rem;">
+              <h4 style="color:var(--cyan); margin-bottom:0.5rem;">Can I integrate this backend with a mobile app or browser extension?</h4>
+              <p style="font-size:0.88rem; margin:0;">
+                Yes. The FastAPI backend exposes standard REST endpoints (<code>POST /predict</code>, <code>POST /api/predict</code>) with full CORS support. 
+                Any client application capable of sending JSON HTTP requests can consume the inference API.
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Safe Messaging Guidelines -->
+        <div class="card">
+          <div class="card-icon" style="background:rgba(16,185,129,0.15); color:var(--safe);">🛡️</div>
+          <h2>Essential Safe Messaging Practices</h2>
+          <p style="font-size:0.92rem; line-height:1.7;">
+            Regardless of any AI model's output, always enforce these security rules:
+          </p>
+          <ul style="color:var(--text-muted); font-size:0.9rem; padding-left:1.25rem; line-height:1.8;">
+            <li><strong>Verify Out-of-Band:</strong> If a message claims your bank card is frozen or taxes are due, open your browser and navigate directly to the official portal or call the number printed on the back of your physical card.</li>
+            <li><strong>Inspect Sender Headers:</strong> Check the actual email address inside angle brackets, not merely the displayed name.</li>
+            <li><strong>Never Disclose OTPs or 2FA Codes:</strong> One-Time Passwords are cryptographic keys. No legitimate support representative will ever ask you to read them aloud or type them into an SMS link.</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

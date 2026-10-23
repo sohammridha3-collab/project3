@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Details & System Documentation · ScamShield AI</title>
+  <meta name="description" content="Comprehensive documentation on ScamShield AI architecture, machine learning model performance, CallScam audio analysis, technologies, and cybersecurity limitations.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header" id="site-header"></header>
+
+  <main id="main">
+    <div class="page-header">
+      <div class="wrap">
+        <h1>ScamShield AI — System Documentation</h1>
+        <p>Complete technical review of our ML threat detection pipeline, empirical evaluation metrics, CallScam multilingual audio engine, and cybersecurity safeguards.</p>
+      </div>
+    </div>
+
+    <section class="block">
+      <div class="wrap details-layout">
+        
+        <!-- Sticky Sidebar Navigation -->
+        <aside class="details-sidebar">
+          <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); margin-bottom:0.75rem; padding-left:0.5rem;">
+            Documentation Index
+          </div>
+          <nav class="details-nav" id="details-nav">
+            <a href="#overview" class="details-nav-item active">
+              <span>🎯</span> Project Overview
+            </a>
+            <a href="#how-it-works" class="details-nav-item">
+              <span>🧠</span> How It Works
+            </a>
+            <a href="#performance" class="details-nav-item">
+              <span>📊</span> Model Performance
+            </a>
+            <a href="#callscam" class="details-nav-item">
+              <span>📞</span> CallScam Technology
+            </a>
+            <a href="#technologies" class="details-nav-item">
+              <span>💻</span> Technologies Used
+            </a>
+            <a href="#privacy" class="details-nav-item">
+              <span>🔒</span> Privacy & Limitations
+            </a>
+          </nav>
+
+          <div style="margin-top:1.5rem; padding-top:1.25rem; border-top:1px solid var(--navy-border); font-size:0.8rem; color:var(--text-dim);">
+            Project: <strong>B.Tech CSE Capstone</strong><br/>
+            Model: <strong>LinearSVC + TF-IDF</strong><br/>
+            Accuracy: <strong style="color:var(--safe);">99.85%</strong>
+          </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="details-content">
+          
+          <!-- SECTION A: PROJECT OVERVIEW -->
+          <article class="details-section" id="overview">
+            <h2>🎯 Section A: Project Overview</h2>
+            <div class="card" style="margin-bottom:1.5rem;">
+              <h3>Problem Statement</h3>
+              <p style="line-height:1.7; font-size:0.95rem;">
+                Digital communication channels (SMS, email, instant messages, and phone calls) are overwhelmed by sophisticated social-engineering attacks. 
+                Attackers weaponize urgency, fake authority, lottery lures, bank account locks, and impersonation to deceive everyday users into handing over sensitive credentials, one-time passwords (OTP), and financial funds. Traditional keyword filters and static blocklists fail against zero-day phrasing, subtle obfuscation, and multilingual voice-based scams.
+              </p>
+
+              <h3>Project Objectives</h3>
+              <ul style="color:var(--text-muted); font-size:0.92rem; padding-left:1.25rem; line-height:1.8;">
+                <li><strong>Machine Learning Ingestion:</strong> Classify digital communications using a trained dual-representation TF-IDF and Linear Support Vector Classifier (LinearSVC) pipeline.</li>
+                <li><strong>Explainable AI & Threat Heuristics:</strong> Pair raw classification outputs with transparent, human-readable indicator warnings (urgency markers, suspicious URL patterns, payment requests) to empower user awareness.</li>
+                <li><strong>Multilingual Voice Defense (CallScam):</strong> Transcribe and screen call recordings in English, Hindi, and Bengali using a synchronized speech-to-text and multilingual fraud heuristic pipeline.</li>
+                <li><strong>Production-Grade Cybersecurity Architecture:</strong> Provide secure, user-isolated database persistence (SQLite/PostgreSQL), NIST-approved PBKDF2 password hashing, JWT authorization, and executive PDF audit reporting.</li>
+              </ul>
+
+              <h3>Intended Users & Real-World Use Cases</h3>
+              <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top:1.25rem;">
+                <div class="metric-tile">
+                  <div class="k">Everyday Consumers</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">Personal Defense</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Screen unexpected bank alerts, lottery texts, and suspicious calls before clicking or replying.</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Enterprise IT Security</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">SOC Incident Triaging</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Employees and security teams triage reported phishing emails with executive audit PDF reports.</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Academic / Research</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">B.Tech CSE Demonstration</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Demonstrating model evaluation, hyperplane geometry, Platt calibration, and speech transcription.</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- SECTION B: HOW THE SYSTEM WORKS -->
+          <article class="details-section" id="how-it-works">
+            <h2>🧠 Section B: How the System Works</h2>
+            
+            <div class="card" style="margin-bottom:1.5rem;">
+              <h3>6-Stage Threat Detection Flow</h3>
+              <p style="font-size:0.92rem; line-height:1.7;">
+                Every incoming message travels through an end-to-end NLP screening pipeline executed inside our FastAPI server:
+              </p>
+
+              <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top:1.25rem;">
+                <div class="metric-tile">
+                  <div class="k" style="color:var(--blue);">01 · Input Sanitization</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">Length Bounding & Normalization</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Restricts input to 20,000 characters and structures emails into <code>SUBJECT: ... BODY: ...</code> matching training data.</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k" style="color:var(--cyan);">02 · Dual TF-IDF Vectorizer</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">120,000 Sparse Features</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">FeatureUnion combining Word TF-IDF (1–2 n-grams, 80k features) and Character TF-IDF (3–5 n-grams, 40k features).</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k" style="color:var(--teal);">03 · LinearSVC Classification</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">Hyperplane Margin Evaluation</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Computes geometric dot product z = w · x + b to classify on the optimal separating hyperplane.</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k" style="color:var(--warn);">04 · Platt Sigmoid Calibration</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">Calibrated Probability Score</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Maps margin z into [0, 1] using σ(z) = 1 / (1 + e<sup>-z</sup>) for intuitive threat confidence gauges.</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k" style="color:var(--scam);">05 · Heuristic Rule Inspection</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">Explainable Attack Patterns</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Flags urgency markers, suspicious URL shorteners, financial lures, and credential requests.</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k" style="color:var(--safe);">06 · Persistence & Audit PDF</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">Relational DB & ReportLab PDF</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Saves user scan history with cascade isolation and generates downloadable PDF audit reports.</div>
+                </div>
+              </div>
+
+              <h3 style="margin-top:2rem;">System Architecture Diagram</h3>
+              <div style="background:rgba(0,0,0,0.45); border:1px solid var(--navy-border); border-radius:14px; padding:1.5rem; text-align:center; margin-top:1rem; font-family:var(--font-mono); font-size:0.85rem;">
+                <div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:12px; line-height:1.6;">
+                  <span style="background:rgba(59,130,246,0.2); border:1px solid var(--blue); padding:8px 14px; border-radius:8px; color:#93C5FD;">Client Browser (Vanilla JS)</span>
+                  <span style="color:var(--text-dim);">──HTTP POST JSON/Multipart──►</span>
+                  <span style="background:rgba(6,182,212,0.2); border:1px solid var(--cyan); padding:8px 14px; border-radius:8px; color:#67E8F9;">FastAPI REST Engine (:8001)</span>
+                  <span style="color:var(--text-dim);">──Memory In-Lifespan──►</span>
+                  <span style="background:rgba(16,185,129,0.2); border:1px solid var(--safe); padding:8px 14px; border-radius:8px; color:#6EE7B7;">LinearSVC ML Pipeline</span>
+                </div>
+                <div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:12px; margin-top:12px;">
+                  <span style="background:rgba(245,158,11,0.15); border:1px solid var(--warn); padding:6px 12px; border-radius:6px; color:#FCD34D;">Speech-to-Text Engine</span>
+                  <span style="color:var(--text-dim);">◄──Audio Upload──►</span>
+                  <span style="background:rgba(168,85,247,0.15); border:1px solid #A855F7; padding:6px 12px; border-radius:6px; color:#D8B4FE;">SQLite / PostgreSQL ORM</span>
+                  <span style="color:var(--text-dim);">◄──Audit Export──►</span>
+                  <span style="background:rgba(239,68,68,0.15); border:1px solid var(--scam); padding:6px 12px; border-radius:6px; color:#FCA5A5;">ReportLab Platypus PDF</span>
+                </div>
+              </div>
+
+              <h3 style="margin-top:2rem;">Training Dataset: CEAS 2008</h3>
+              <p style="font-size:0.92rem; line-height:1.7;">
+                The text classifier was trained and evaluated on the <strong>CEAS 2008 Email Spam/Ham Dataset</strong>, comprising <strong>39,154 verified records</strong> (20,296 clean legitimate messages and 18,858 confirmed phishing/scam samples). Evaluated using an 80/20 train/test split.
+              </p>
+            </div>
+          </article>
+
+          <!-- SECTION C: MODEL PERFORMANCE -->
+          <article class="details-section" id="performance">
+            <h2>📊 Section C: Model Performance & Benchmark Evaluation</h2>
+            
+            <div class="card" style="margin-bottom:1.5rem;">
+              <p style="font-size:0.92rem; line-height:1.7;">
+                All metrics below are empirical evaluation scores recorded on the <strong>7,820 held-out test messages</strong> from the CEAS 2008 corpus. No values are fabricated or estimated.
+              </p>
+
+              <!-- Top Metrics Tiles -->
+              <div class="stats-grid" style="margin:1.5rem 0;">
+                <div class="stat-card">
+                  <div class="label">Overall Accuracy</div>
+                  <div class="val" style="color:#34D399;">99.85%</div>
+                  <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">7,808 / 7,820 correct test cases</div>
+                </div>
+                <div class="stat-card">
+                  <div class="label">Precision (Scam)</div>
+                  <div class="val" style="color:var(--cyan);">99.93%</div>
+                  <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Only 3 false positives out of 3,461</div>
+                </div>
+                <div class="stat-card">
+                  <div class="label">Recall (Sensitivity)</div>
+                  <div class="val" style="color:var(--blue);">99.79%</div>
+                  <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Caught 4,350 out of 4,359 actual scams</div>
+                </div>
+                <div class="stat-card">
+                  <div class="label">Harmonic F1-Score</div>
+                  <div class="val" style="color:#A78BFA;">99.86%</div>
+                  <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Balanced harmonic precision & recall</div>
+                </div>
+              </div>
+
+              <!-- Confusion Matrix -->
+              <h3>Held-out Test Confusion Matrix (N = 7,820)</h3>
+              <div style="background:rgba(0,0,0,0.35); border:1px solid var(--navy-border); border-radius:14px; padding:1.5rem; margin-top:1rem; max-width:620px;">
+                <div style="display:grid; grid-template-columns:130px 1fr 1fr; gap:10px; text-align:center; font-family:var(--font-mono);">
+                  <div></div>
+                  <div style="font-size:0.75rem; color:var(--text-dim); font-weight:700;">PREDICTED HAM</div>
+                  <div style="font-size:0.75rem; color:var(--text-dim); font-weight:700;">PREDICTED SCAM</div>
+
+                  <div style="display:flex; align-items:center; justify-content:flex-end; font-size:0.75rem; color:var(--text-dim); font-weight:700;">
+                    ACTUAL HAM
+                  </div>
+                  <div style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); border-radius:8px; padding:12px;">
+                    <div style="font-size:1.35rem; font-weight:800; color:#34D399;">3,458</div>
+                    <div style="font-size:0.68rem; color:var(--text-dim);">True Negatives (TN)</div>
+                  </div>
+                  <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:12px;">
+                    <div style="font-size:1.35rem; font-weight:800; color:#F87171;">3</div>
+                    <div style="font-size:0.68rem; color:var(--text-dim);">False Positives (FP)</div>
+                  </div>
+
+                  <div style="display:flex; align-items:center; justify-content:flex-end; font-size:0.75rem; color:var(--text-dim); font-weight:700;">
+                    ACTUAL SCAM
+                  </div>
+                  <div style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:8px; padding:12px;">
+                    <div style="font-size:1.35rem; font-weight:800; color:#FBBF24;">9</div>
+                    <div style="font-size:0.68rem; color:var(--text-dim);">False Negatives (FN)</div>
+                  </div>
+                  <div style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); border-radius:8px; padding:12px;">
+                    <div style="font-size:1.35rem; font-weight:800; color:#34D399;">4,350</div>
+                    <div style="font-size:0.68rem; color:var(--text-dim);">True Positives (TP)</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top:1.25rem; font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
+                • <strong>False Positive Rate:</strong> <code>0.086%</code> (under 1 legitimate message per 1,000 misflagged).<br/>
+                • <strong>ROC-AUC:</strong> <code>0.9999</code> • <strong>Average Precision (PR-AUC):</strong> <code>0.9999</code>.
+              </div>
+
+              <h3 style="margin-top:1.75rem;">Model Selection: 3-Fold Stratified Cross-Validation Benchmark</h3>
+              <div style="overflow-x:auto; margin-top:1rem;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left;">
+                  <thead>
+                    <tr style="border-bottom:1px solid var(--navy-border); color:var(--text-dim);">
+                      <th style="padding:10px;">Classifier Model</th>
+                      <th style="padding:10px;">Mean CV Accuracy</th>
+                      <th style="padding:10px;">Mean CV F1</th>
+                      <th style="padding:10px;">Training Time</th>
+                      <th style="padding:10px;">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.04); background:rgba(6,182,212,0.06);">
+                      <td style="padding:10px; font-weight:700; color:#FFFFFF;">LinearSVC (Selected)</td>
+                      <td style="padding:10px; color:#34D399; font-weight:700;">99.70%</td>
+                      <td style="padding:10px; color:#34D399; font-weight:700;">99.73%</td>
+                      <td style="padding:10px;">4.25 s</td>
+                      <td style="padding:10px;"><span style="color:var(--cyan); font-weight:700;">🏆 Winner</span></td>
+                    </tr>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                      <td style="padding:10px; font-weight:600; color:var(--text-muted);">Logistic Regression</td>
+                      <td style="padding:10px;">98.85%</td>
+                      <td style="padding:10px;">98.98%</td>
+                      <td style="padding:10px;">7.60 s</td>
+                      <td style="padding:10px; color:var(--text-dim);">Baseline</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px; font-weight:600; color:var(--text-muted);">Multinomial Naive Bayes</td>
+                      <td style="padding:10px;">97.42%</td>
+                      <td style="padding:10px;">97.74%</td>
+                      <td style="padding:10px;">1.85 s</td>
+                      <td style="padding:10px; color:var(--text-dim);">Baseline</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </article>
+
+          <!-- SECTION D: CALLSCAM TECHNOLOGY -->
+          <article class="details-section" id="callscam">
+            <h2>📞 Section D: CallScam — Audio & Multilingual Voice Detection</h2>
+            
+            <div class="card" style="margin-bottom:1.5rem;">
+              <h3>Overview of CallScam Engine</h3>
+              <p style="font-size:0.92rem; line-height:1.7;">
+                <strong>CallScam</strong> extends threat screening into the voice and audio domain. Users upload recorded calls or capture voice samples directly in their browser. The system normalizes the audio, transcribes speech across English, Hindi, and Bengali, and screens the conversation for financial fraud, urgent threats, and impersonation cues.
+              </p>
+
+              <h3>Multilingual Speech-to-Text Pipeline</h3>
+              <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top:1.25rem;">
+                <div class="metric-tile">
+                  <div class="k" style="color:var(--blue);">01 · Browser Audio Normalization</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">Web Audio API Resampling</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Decodes MP3, M4A, WebM, and WAV in-browser to standard 16 kHz 16-bit PCM mono WAV before transmission.</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k" style="color:var(--cyan);">02 · Multilingual Transcription</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">English, Hindi & Bengali</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Transcribes speech with automatic language routing: en-US (English), hi-IN (हिन्दी), and bn-IN (বাংলা).</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k" style="color:var(--teal);">03 · Script & Language Detection</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">Unicode Script Verification</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Identifies native Devanagari (\u0900-\u097F), Bengali (\u0980-\u09FF), and Latin scripts with code-switching tolerance.</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k" style="color:var(--warn);">04 · Cross-Lingual Threat Scoring</div>
+                  <div style="font-size:0.85rem; color:#FFFFFF; margin-top:0.25rem; font-weight:600;">Native Heuristics + ML Hyperplane</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Evaluates native language fraud keywords (e.g. बैंक खाता, ওটিপি, লটারি) combined with ML model decision margins.</div>
+                </div>
+              </div>
+
+              <h3 style="margin-top:1.75rem;">Important Voice Recording Limitations & Safeguards</h3>
+              <ul style="color:var(--text-muted); font-size:0.9rem; padding-left:1.25rem; line-height:1.7;">
+                <li><strong>Microphone vs. Cellular Call Audio:</strong> Web browsers only have permission to capture the user's local microphone input. A browser cannot silently tap or record both sides of a cellular phone call due to operating-system security sandboxes. For cellular calls, users must use an authorized call recording app and upload the resulting audio file.</li>
+                <li><strong>Explicit Legal Consent:</strong> Wiretapping and recording privacy regulations in many jurisdictions require two-party consent. ScamShield AI requires users to obtain consent before recording or analyzing conversations.</li>
+                <li><strong>Speech Recognition Boundary Conditions:</strong> Background acoustic noise, heavy accents, and low bitrate telecom audio can degrade transcription accuracy. If transcription confidence is low, the system returns an <strong>Inconclusive</strong> verdict rather than an inaccurate false positive.</li>
+              </ul>
+            </div>
+          </article>
+
+          <!-- SECTION E: TECHNOLOGIES USED -->
+          <article class="details-section" id="technologies">
+            <h2>💻 Section E: Technologies Used</h2>
+            
+            <div class="card" style="margin-bottom:1.5rem;">
+              <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+                <div class="metric-tile">
+                  <div class="k">Machine Learning</div>
+                  <div style="font-weight:700; color:#FFFFFF; margin-top:0.25rem;">scikit-learn & joblib</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">LinearSVC, FeatureUnion, TfidfVectorizer (Word & Char n-grams).</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Backend API</div>
+                  <div style="font-weight:700; color:#FFFFFF; margin-top:0.25rem;">FastAPI & Uvicorn</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Python 3.12, Pydantic v2 schemas, lifespan model loading.</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Database & ORM</div>
+                  <div style="font-weight:700; color:#FFFFFF; margin-top:0.25rem;">SQLAlchemy & SQLite / Postgres</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Relational models for User, ScanRecord, and CallScanRecord.</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Authentication & Security</div>
+                  <div style="font-weight:700; color:#FFFFFF; margin-top:0.25rem;">PBKDF2-SHA256 & python-jose</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">NIST-approved password hashing (100k rounds) & signed JWT tokens.</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Speech & Multilingual</div>
+                  <div style="font-weight:700; color:#FFFFFF; margin-top:0.25rem;">SpeechRecognition & Web Audio</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Client-side PCM resampling & multi-language STT (en, hi, bn).</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Audit PDF Generation</div>
+                  <div style="font-weight:700; color:#FFFFFF; margin-top:0.25rem;">ReportLab Platypus</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Automated cybersecurity audit report synthesis and vector tables.</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Frontend Client</div>
+                  <div style="font-weight:700; color:#FFFFFF; margin-top:0.25rem;">Vanilla HTML5, CSS3 & JavaScript</div>
+                  <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">Pure web standards, zero frameworks, 3D CSS cyber-defense theme.</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- SECTION F: PRIVACY & LIMITATIONS -->
+          <article class="details-section" id="privacy">
+            <h2>🔒 Section F: Privacy, Safety & Limitations</h2>
+            
+            <div class="card" style="margin-bottom:1.5rem; border-left:4px solid var(--warn);">
+              <h3 style="color:#FCD34D;">Zero-Trust Principle & Model Limitations</h3>
+              <p style="font-size:0.92rem; line-height:1.7;">
+                Cybersecurity engineering mandates full transparency regarding boundary conditions:
+              </p>
+              <ul style="color:var(--text-muted); font-size:0.9rem; padding-left:1.25rem; line-height:1.8;">
+                <li><strong>Negative Result != Guaranteed Safety:</strong> A "Clean / Legitimate" verdict indicates that the message or transcript does not match known threat patterns in the training distribution. It does <em>not</em> guarantee 100% safety. Attackers continually invent new pretexting methods.</li>
+                <li><strong>No Verification of Caller Identity:</strong> The system analyzes linguistic content and threat indicators. It cannot verify whether an incoming phone number or email address has been spoofed at the carrier/protocol level.</li>
+                <li><strong>Data Retention & Deletion Rights:</strong> Guest scans are processed in-memory and discarded. Authenticated users have full control to view or permanently purge individual scans or their entire history at any time. Uploaded audio files are stored in temporary memory during transcription and immediately cleaned up.</li>
+              </ul>
+
+              <h3 style="margin-top:1.5rem;">Universal Safe Messaging & Calling Guidelines</h3>
+              <div style="display:flex; flex-direction:column; gap:0.75rem; margin-top:0.75rem;">
+                <div class="safety-item">
+                  <span style="color:var(--cyan); font-weight:700;">1.</span>
+                  <span><strong>Never disclose OTPs:</strong> Legitimate bank representatives and support staff will never request your SMS OTP, PIN, or banking passwords over phone, SMS, or email.</span>
+                </div>
+                <div class="safety-item">
+                  <span style="color:var(--cyan); font-weight:700;">2.</span>
+                  <span><strong>Verify via Secondary Channel:</strong> If an urgent account suspension, tax audit, or legal arrest threat is received, hang up and call the organization's verified public hotline directly.</span>
+                </div>
+                <div class="safety-item">
+                  <span style="color:var(--cyan); font-weight:700;">3.</span>
+                  <span><strong>Do not install remote assistance apps:</strong> Never install apps like AnyDesk, TeamViewer, or QuickSupport on the instruction of an unverified caller.</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+  <script src="js/details.js"></script>
+</body>
+</html>

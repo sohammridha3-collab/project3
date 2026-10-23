@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ScamShield AI · Intelligent Scam Message Detection System</title>
+  <meta name="description" content="AI-based scam and phishing message screening system. Classify suspicious SMS and emails using trained machine learning models.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header" id="site-header"></header>
+
+  <main id="main">
+    
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-grid">
+          <div>
+            <div class="hero-tag">
+              <span>🛡️ B.Tech CSE Machine Learning Project</span>
+            </div>
+            <h1>Think Before You Click. Detect Scams with AI.</h1>
+            <p>
+              Analyze incoming email and SMS communications against a trained Support Vector Machine threat pipeline. 
+              Sub-20ms inference, explainable indicator tags, and downloadable audit PDF reports.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="analyze.html">⚡ Analyze a Message</a>
+              <a class="btn btn-cyan" href="callscam.html">📞 CallScam Audio AI</a>
+              <a class="btn btn-ghost" href="details.html">📖 System Details & Metrics</a>
+            </div>
+          </div>
+
+          <!-- 3D CSS Shield Scene -->
+          <div class="scene-container" aria-hidden="true">
+            <div class="cyber-ring r1"></div>
+            <div class="cyber-ring r2"></div>
+            <div class="cyber-ring r3"></div>
+            <div class="shield-3d"><i></i></div>
+            <span class="cyber-particle p1"></span>
+            <span class="cyber-particle p2"></span>
+            <span class="cyber-particle p3"></span>
+            <span class="cyber-particle p4"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Core Capabilities -->
+    <section class="block">
+      <div class="wrap">
+        <div class="block-title">
+          <h2>Intelligent Threat Detection Features</h2>
+          <p>Engineered for high accuracy and user transparency across digital messaging and voice channels.</p>
+        </div>
+
+        <div class="cards-grid">
+          
+          <div class="card tilt">
+            <div class="card-icon">⚡</div>
+            <h3>Message Threat Screening</h3>
+            <p style="font-size:0.9rem;">
+              Two-column interactive workspace with instant LinearSVC classification, 120k TF-IDF features, decision margins, and safety guidance.
+            </p>
+            <a href="analyze.html" style="font-size:0.85rem; color:var(--cyan); font-weight:600; text-decoration:none;">Open Workspace →</a>
+          </div>
+
+          <div class="card tilt">
+            <div class="card-icon">📞</div>
+            <h3>CallScam Audio Intelligence</h3>
+            <p style="font-size:0.9rem;">
+              Upload or record suspicious calls with in-browser microphone capture. Transcribes speech and detects fraud cues across English, Hindi, and Bengali.
+            </p>
+            <a href="callscam.html" style="font-size:0.85rem; color:var(--cyan); font-weight:600; text-decoration:none;">Launch CallScam →</a>
+          </div>
+
+          <div class="card tilt">
+            <div class="card-icon">⚠️</div>
+            <h3>Explainable Indicators</h3>
+            <p style="font-size:0.9rem;">
+              Rule-based heuristic detection identifies urgency threats, prize lures, credential harvesting, and suspicious URLs alongside the ML decision.
+            </p>
+            <span style="font-size:0.85rem; color:var(--text-dim);">Heuristic Transparency</span>
+          </div>
+
+          <div class="card tilt">
+            <div class="card-icon">📄</div>
+            <h3>Executive Audit Reports</h3>
+            <p style="font-size:0.9rem;">
+              Generate and download formal PDF cybersecurity audit reports synthesized directly on the backend using ReportLab for your security archives.
+            </p>
+            <span style="font-size:0.85rem; color:var(--text-dim);">ReportLab Platypus Engine</span>
+          </div>
+
+          <div class="card tilt">
+            <div class="card-icon">📊</div>
+            <h3>Verified Empirical Metrics</h3>
+            <p style="font-size:0.9rem;">
+              99.85% held-out test accuracy, 99.86% F1-score, and full 2x2 confusion matrix documented with complete academic transparency.
+            </p>
+            <a href="details.html#performance" style="font-size:0.85rem; color:var(--cyan); font-weight:600; text-decoration:none;">View Benchmarks →</a>
+          </div>
+
+          <div class="card tilt">
+            <div class="card-icon">🔒</div>
+            <h3>Isolated History & Auth</h3>
+            <p style="font-size:0.9rem;">
+              Authenticated users can save and manage their scan history securely in SQLite/PostgreSQL, with search, filtering, and delete controls.
+            </p>
+            <a href="dashboard.html" style="font-size:0.85rem; color:var(--cyan); font-weight:600; text-decoration:none;">View Results →</a>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Simple 3-Step Workflow -->
+    <section class="block" style="background:var(--navy-surface); border-top:1px solid var(--navy-border); border-bottom:1px solid var(--navy-border);">
+      <div class="wrap">
+        <div class="block-title">
+          <h2>How ScamShield AI Operates</h2>
+          <p>Screen any message in three simple steps before clicking or responding.</p>
+        </div>
+
+        <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+          
+          <div class="card">
+            <div style="font-family:var(--font-mono); color:var(--cyan); font-size:1.5rem; font-weight:800; margin-bottom:0.75rem;">01</div>
+            <h3>Paste Your Message</h3>
+            <p style="font-size:0.9rem;">
+              Drop in an SMS or email text. Choose between SMS mode or structured Email mode (with subject line) in the analysis workspace.
+            </p>
+          </div>
+
+          <div class="card">
+            <div style="font-family:var(--font-mono); color:var(--blue); font-size:1.5rem; font-weight:800; margin-bottom:0.75rem;">02</div>
+            <h3>Real-Time Evaluation</h3>
+            <p style="font-size:0.9rem;">
+              The text is vectorized into 120,000 features and evaluated against the LinearSVC decision boundary, outputting calibrated probability and margin.
+            </p>
+          </div>
+
+          <div class="card">
+            <div style="font-family:var(--font-mono); color:var(--safe); font-size:1.5rem; font-weight:800; margin-bottom:0.75rem;">03</div>
+            <h3>Act With Confidence</h3>
+            <p style="font-size:0.9rem;">
+              Review detected threat indicators, download a PDF report, or follow our zero-trust defense guidelines before proceeding.
+            </p>
+          </div>
+
+        </div>
+
+        <div style="text-align:center; margin-top:2.5rem;">
+          <a class="btn btn-primary" href="analyze.html" style="font-size:1rem; padding:0.8rem 2rem;">Screen a Message Now →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Privacy & Responsible Use Notice -->
+    <section class="block">
+      <div class="wrap" style="max-width:850px; margin:auto;">
+        <div class="card" style="border-left:4px solid var(--cyan);">
+          <h3 style="color:var(--cyan); margin-bottom:0.5rem;">Privacy & Academic Disclaimer</h3>
+          <p style="font-size:0.92rem; line-height:1.7; margin-bottom:0;">
+            ScamShield AI is developed as a final year B.Tech CSE capstone project. 
+            All classifications represent an empirical statistical assessment. 
+            <strong>Never disclose OTPs, banking PINs, or confidential credentials based on an unsolicited message.</strong>
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+  <script src="config.js?v=3.1"></script>
+  <script src="main.js?v=3.1"></script>
+</body>
+</html>

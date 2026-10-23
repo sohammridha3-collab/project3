@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign In · ScamShield AI</title>
+  <meta name="description" content="Sign in to your ScamShield AI account to access protected scan history and security analytics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header" id="site-header"></header>
+
+  <main id="main">
+    <div class="wrap">
+      <div class="auth-panel card tilt">
+        <div class="auth-header">
+          <div class="card-icon" style="margin:0 auto 1rem;">🛡️</div>
+          <h1>Welcome Back</h1>
+          <p>Sign in to access your cybersecurity workspace and private scan history.</p>
+        </div>
+
+        <div id="auth-error" class="form-error" hidden role="alert"></div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email Address</label>
+            <input type="email" id="login-email" required placeholder="name@company.com" autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <div class="form-label">
+              <label for="login-password">Password</label>
+            </div>
+            <div class="input-wrapper">
+              <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
+              <button type="button" class="input-btn-eye" data-target="login-password" aria-label="Toggle password visibility">👁️</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; color:var(--text-muted); font-weight:normal; text-transform:none;">
+              <input type="checkbox" id="login-remember"> Remember this session
+            </label>
+          </div>
+
+          <button type="submit" id="login-submit-btn" class="btn btn-primary" style="width:100%; margin-top:0.5rem;">
+            <span>Sign In to ScamShield</span>
+          </button>
+        </form>
+
+        <div style="text-align:center; margin-top:1.5rem; font-size:0.9rem; color:var(--text-muted);">
+          Don't have an account? <a href="register.html" style="font-weight:600; color:var(--cyan);">Create one now</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>

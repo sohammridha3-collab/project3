@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Results · ScamShield AI</title>
+  <meta name="description" content="Personal cybersecurity results with message scan analytics, threat breakdown, and quick actions.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header" id="site-header"></header>
+
+  <main id="main">
+    <div class="page-header">
+      <div class="wrap" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1.5rem;">
+        <div>
+          <h1 id="welcome-msg">Results</h1>
+          <p id="user-email-subtitle">Personal Threat Analytics & Activity Overview</p>
+        </div>
+        <div style="display:flex; gap:0.75rem;">
+          <a href="analyze.html" class="btn btn-primary">⚡ Launch New Scan</a>
+          <a href="history.html" class="btn btn-ghost">📜 View All History</a>
+        </div>
+      </div>
+    </div>
+
+    <section class="block">
+      <div class="wrap">
+        
+        <!-- Live Stat Cards Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="label">Total Messages Screened</div>
+            <div class="val" id="stat-total">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Threats Flagged</div>
+            <div class="val" id="stat-scam" style="color:#F87171;">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Clean / Legitimate</div>
+            <div class="val" id="stat-clean" style="color:#34D399;">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Threat Ratio</div>
+            <div class="val" id="stat-ratio" style="color:var(--cyan);">0%</div>
+          </div>
+        </div>
+
+        <!-- Recent Scan Activity -->
+        <div class="card" style="margin-bottom:2.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+            <div>
+              <h3>Recent Screening Activity</h3>
+              <p style="margin:0; font-size:0.85rem;">Your latest classified communications and security reports.</p>
+            </div>
+            <a href="history.html" class="btn btn-ghost btn-sm">Full History →</a>
+          </div>
+
+          <!-- Empty State -->
+          <div id="history-empty" style="display:none; text-align:center; padding:3rem 1.5rem;">
+            <div style="font-size:2.5rem; margin-bottom:0.75rem;">🛡️</div>
+            <h3>No Scan History Yet</h3>
+            <p style="max-width:40ch; margin:0.5rem auto 1.5rem; font-size:0.9rem;">
+              You haven't performed any analyses yet. Messages and call recordings you evaluate will appear here.
+            </p>
+            <div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">
+              <a href="analyze.html" class="btn btn-primary btn-sm">Scan Message</a>
+              <a href="callscam.html" class="btn btn-ghost btn-sm">Analyze Call</a>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="table-responsive" id="history-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Type</th>
+                  <th>Content Preview</th>
+                  <th>Classification</th>
+                  <th>Confidence</th>
+                  <th>Report</th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- System Status & Model Specs -->
+        <div class="cards-grid">
+          <div class="card">
+            <div class="card-icon">⚙️</div>
+            <h3>Active ML Pipeline</h3>
+            <p style="font-size:0.88rem;">Linear Support Vector Classifier (LinearSVC) preloaded into memory at application start.</p>
+            <div style="font-size:0.82rem; font-family:var(--font-mono); color:var(--text-dim); margin-top:0.75rem;">
+              Features: Word TF-IDF (80k) + Char TF-IDF (40k)
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-icon">📊</div>
+            <h3>Held-Out Benchmark</h3>
+            <p style="font-size:0.88rem;">Tested on held-out CEAS 2008 partition yielding <strong>99.85% accuracy</strong> and <strong>99.86% F1</strong>.</p>
+            <div style="margin-top:0.75rem;">
+              <a href="model-performance.html" style="font-size:0.85rem; font-weight:600;">View Full Evaluation Metrics →</a>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-icon">🔒</div>
+            <h3>Zero-Trust Data Isolation</h3>
+            <p style="font-size:0.88rem;">All records are protected by database foreign keys and server-side JWT authorization checks.</p>
+            <div style="margin-top:0.75rem;">
+              <a href="about.html" style="font-size:0.85rem; font-weight:600;">Read Security Practices →</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

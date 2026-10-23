@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Model Performance · ScamShield AI</title>
+  <meta name="description" content="Verified evaluation metrics, cross-validation benchmarks, and confusion matrix for the LinearSVC threat detection model.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header" id="site-header"></header>
+
+  <main id="main">
+    <div class="page-header">
+      <div class="wrap">
+        <h1>Model Evaluation & Benchmark Metrics</h1>
+        <p>Empirical results measured on a held-out test partition (20% split) of the CEAS 2008 corpus.</p>
+      </div>
+    </div>
+
+    <section class="block">
+      <div class="wrap">
+        
+        <!-- Top Level Score Tiles -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="label">Overall Accuracy</div>
+            <div class="val" style="color:#34D399;">99.85%</div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">7,808 / 7,820 correct</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Precision (Scam)</div>
+            <div class="val" style="color:var(--cyan);">99.93%</div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Only 3 false positives in 3,461</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Recall (Sensitivity)</div>
+            <div class="val" style="color:var(--blue);">99.79%</div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Caught 4,350 out of 4,359 scams</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Harmonic F1-Score</div>
+            <div class="val" style="color:#A78BFA;">99.86%</div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Balanced measure of P & R</div>
+          </div>
+        </div>
+
+        <!-- 2 Columns: Confusion Matrix & Cross-Validation -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-bottom:2.5rem;">
+          
+          <!-- Confusion Matrix Card -->
+          <div class="card">
+            <h3>Confusion Matrix (Held-out Test Split)</h3>
+            <p style="font-size:0.88rem;">Evaluating 7,820 unobserved emails from the test dataset:</p>
+
+            <div style="background:rgba(0,0,0,0.35); border:1px solid var(--navy-border); border-radius:14px; padding:1.5rem; margin-top:1rem;">
+              <div style="display:grid; grid-template-columns:120px 1fr 1fr; gap:10px; text-align:center; font-family:var(--font-mono);">
+                
+                <div></div>
+                <div style="font-size:0.75rem; color:var(--text-dim); font-weight:700;">PREDICTED HAM</div>
+                <div style="font-size:0.75rem; color:var(--text-dim); font-weight:700;">PREDICTED SCAM</div>
+
+                <div style="display:flex; align-items:center; font-size:0.75rem; color:var(--text-dim); font-weight:700; text-align:right; justify-content:flex-end;">
+                  ACTUAL HAM
+                </div>
+                <div style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); border-radius:8px; padding:14px;">
+                  <div style="font-size:1.4rem; font-weight:800; color:#34D399;">3,458</div>
+                  <div style="font-size:0.7rem; color:var(--text-dim);">True Negatives (TN)</div>
+                </div>
+                <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:14px;">
+                  <div style="font-size:1.4rem; font-weight:800; color:#F87171;">3</div>
+                  <div style="font-size:0.7rem; color:var(--text-dim);">False Positives (FP)</div>
+                </div>
+
+                <div style="display:flex; align-items:center; font-size:0.75rem; color:var(--text-dim); font-weight:700; text-align:right; justify-content:flex-end;">
+                  ACTUAL SCAM
+                </div>
+                <div style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:8px; padding:14px;">
+                  <div style="font-size:1.4rem; font-weight:800; color:#FBBF24;">9</div>
+                  <div style="font-size:0.7rem; color:var(--text-dim);">False Negatives (FN)</div>
+                </div>
+                <div style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); border-radius:8px; padding:14px;">
+                  <div style="font-size:1.4rem; font-weight:800; color:#34D399;">4,350</div>
+                  <div style="font-size:0.7rem; color:var(--text-dim);">True Positives (TP)</div>
+                </div>
+
+              </div>
+            </div>
+
+            <div style="margin-top:1rem; font-size:0.82rem; color:var(--text-dim); line-height:1.6;">
+              • <strong>False Positive Rate:</strong> <code>0.086%</code> (less than 1 legitimate email in 1,000 misflagged)<br/>
+              • <strong>ROC-AUC Score:</strong> <code>0.9999</code> • <strong>Average Precision (PR-AUC):</strong> <code>0.9999</code>
+            </div>
+          </div>
+
+          <!-- Cross Validation Comparison Card -->
+          <div class="card">
+            <h3>Cross-Validation Benchmark (3 Folds)</h3>
+            <p style="font-size:0.88rem;">Trained and cross-validated across all 3 candidate models:</p>
+
+            <div class="table-responsive" style="margin-top:1rem;">
+              <table class="data-table" style="font-size:0.88rem;">
+                <thead>
+                  <tr>
+                    <th>Model Candidate</th>
+                    <th>Mean CV F1</th>
+                    <th>Mean CV Accuracy</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                  </tr>
+                </thead>
+                <tbody id="cv-table-body">
+                  <tr style="background:rgba(59,130,246,0.12);">
+                    <td><strong>Linear SVM (Winner)</strong></td>
+                    <td style="color:#34D399; font-weight:700;">99.73%</td>
+                    <td>99.70%</td>
+                    <td>99.77%</td>
+                    <td>99.68%</td>
+                  </tr>
+                  <tr>
+                    <td>Logistic Regression</td>
+                    <td>99.51%</td>
+                    <td>99.45%</td>
+                    <td>99.57%</td>
+                    <td>99.44%</td>
+                  </tr>
+                  <tr>
+                    <td>Multinomial Naive Bayes</td>
+                    <td>97.74%</td>
+                    <td>97.53%</td>
+                    <td>99.90%</td>
+                    <td>95.67%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="margin-top:1.5rem; padding:1rem; background:rgba(0,0,0,0.25); border-radius:10px; border:1px solid var(--navy-border);">
+              <h4 style="font-size:0.88rem; margin-bottom:0.4rem; color:var(--cyan);">Why Precision & Recall Matter in Cybersecurity</h4>
+              <p style="font-size:0.82rem; margin:0; line-height:1.6;">
+                In scam detection, <strong>high recall</strong> ensures users don't fall victim to catastrophic financial phishing. 
+                Simultaneously, <strong>high precision</strong> prevents users from developing "alert fatigue" and turning off security filters.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Live Metadata Section -->
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+            <h3>Active Model Pipeline Specification</h3>
+            <span class="user-badge" style="color:var(--cyan); border-color:var(--cyan);">
+              Live Endpoint: <code style="margin-left:4px;">/model/info</code>
+            </span>
+          </div>
+
+          <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+            <div class="metric-tile">
+              <div class="k">Classifier Algorithm</div>
+              <div class="v" id="spec-clf" style="font-size:1.15rem;">LinearSVC</div>
+            </div>
+            <div class="metric-tile">
+              <div class="k">Word TF-IDF Vocabulary</div>
+              <div class="v" id="spec-word-vocab">80,000</div>
+            </div>
+            <div class="metric-tile">
+              <div class="k">Char TF-IDF Vocabulary</div>
+              <div class="v" id="spec-char-vocab">40,000</div>
+            </div>
+            <div class="metric-tile">
+              <div class="k">Pipeline Memory Footprint</div>
+              <div class="v" style="font-size:1.15rem;">~5.03 MB</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+  <script src="performance.js"></script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CallScam — AI Call Recording Scam Detection · ScamShield AI</title>
+  <meta name="description" content="Upload or record suspicious telephone conversations to transcribe speech and screen for fraud across English, Hindi, and Bengali.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header" id="site-header"></header>
+
+  <main id="main">
+    <div class="page-header">
+      <div class="wrap">
+        <div style="display:inline-flex; align-items:center; gap:0.5rem; background:rgba(6,182,212,0.12); border:1px solid rgba(6,182,212,0.3); border-radius:9999px; padding:0.3rem 0.85rem; font-size:0.8rem; font-weight:700; color:var(--cyan); margin-bottom:0.75rem;">
+          <span>📞 Multilingual Audio Intelligence</span>
+        </div>
+        <h1>CallScam — Voice Threat Detection</h1>
+        <p>Analyze suspicious phone call recordings for extortion, bank impersonation, and fraudulent lures across English, Hindi, and Bengali.</p>
+      </div>
+    </div>
+
+    <section class="block">
+      <div class="wrap">
+        <div class="workspace-grid">
+          
+          <!-- Left Column: Audio Source & Controls -->
+          <div class="card tilt">
+            <h3 style="margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
+              <span>Call Audio Input</span>
+              <span style="font-size:0.8rem; color:var(--cyan); font-weight:normal;">Speech-to-Text STT</span>
+            </h3>
+
+            <!-- Language Hint Selector -->
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.4rem; font-weight:700; text-transform:uppercase;">
+              Audio Language Selection:
+            </div>
+            <div class="lang-selector-group" id="lang-selector">
+              <button type="button" class="lang-btn active" data-lang="auto">🌐 Auto-Detect</button>
+              <button type="button" class="lang-btn" data-lang="en">🇬🇧 English</button>
+              <button type="button" class="lang-btn" data-lang="hi">🇮🇳 हिन्दी (Hindi)</button>
+              <button type="button" class="lang-btn" data-lang="bn">🇧🇩 বাংলা (Bengali)</button>
+            </div>
+
+            <!-- Quick Preset Audio Samples -->
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.4rem; font-weight:700; text-transform:uppercase;">
+              Test Sample Audio Presets:
+            </div>
+            <div class="preset-chips" id="call-presets">
+              <span class="chip" data-sample="bank_en">🚨 Bank KYC Fraud (EN)</span>
+              <span class="chip" data-sample="police_hi">🚨 Police Arrest Threat (HI)</span>
+              <span class="chip" data-sample="lottery_bn">🎁 $1M Lottery Lure (BN)</span>
+              <span class="chip" data-sample="clean_en">💬 Family Check-in (Clean)</span>
+            </div>
+
+            <!-- Drag & Drop Audio Upload Box -->
+            <div class="audio-dropzone" id="audio-dropzone">
+              <div class="dropzone-icon">🎙️</div>
+              <h4 style="margin-bottom:0.35rem; color:#FFFFFF;">Drag & drop audio recording</h4>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                Supports <strong>WAV, MP3, M4A, WebM</strong> (Up to 25 MB)
+              </p>
+              <button type="button" class="btn btn-ghost btn-sm" id="btn-browse-file">
+                📁 Select Audio File
+              </button>
+              <input type="file" id="audio-file-input" accept="audio/*,.wav,.mp3,.m4a,.webm,.ogg" style="display:none;">
+            </div>
+
+            <!-- In-Browser Microphone Recorder Box -->
+            <div class="recorder-box">
+              <div class="recorder-header">
+                <div class="rec-indicator" id="rec-indicator">
+                  <div class="rec-dot"></div>
+                  <span id="rec-status-text">Microphone Ready</span>
+                </div>
+                <div class="rec-timer" id="rec-timer">00:00</div>
+              </div>
+
+              <!-- Consent & Limitations Notice -->
+              <div class="consent-notice">
+                ⚖️ <strong>Legal Consent Notice:</strong> Ensure you have obtained consent from all recorded participants. Web browser recording captures your local microphone input, not cellular stream.
+              </div>
+
+              <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <button type="button" class="btn btn-primary btn-sm" id="btn-start-record">
+                  🔴 Start Recording
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-stop-record" disabled>
+                  ⏹️ Stop Recording
+                </button>
+              </div>
+            </div>
+
+            <!-- Audio Player Preview Box (Visible when file/recording is ready) -->
+            <div class="audio-preview-box" id="audio-preview-box" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                <span id="preview-filename" style="font-size:0.85rem; font-weight:700; color:#93C5FD; word-break:break-all;"></span>
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-remove-audio" style="min-height:30px; padding:2px 8px; font-size:0.8rem;">
+                  ✕ Remove
+                </button>
+              </div>
+              <audio id="audio-player" class="audio-player" controls></audio>
+              <div id="preview-duration" style="font-size:0.75rem; color:var(--text-dim); margin-top:0.35rem;"></div>
+            </div>
+
+            <!-- Error banner -->
+            <div id="call-error" class="form-error" hidden role="alert"></div>
+
+            <!-- Submit Button -->
+            <button type="button" id="btn-analyze-call" class="btn btn-cyan" style="width:100%; margin-top:0.5rem;" disabled>
+              <span id="btn-analyze-call-text">Analyze Call Recording</span>
+            </button>
+
+            <p style="font-size:0.82rem; color:var(--text-dim); margin-top:1rem; margin-bottom:0;">
+              🔒 <strong>Privacy Commitment:</strong> Audio is processed in temporary server memory and immediately deleted after transcription.
+            </p>
+          </div>
+
+          <!-- Right Column: Results & Transcript View -->
+          <div>
+            <!-- Placeholder before analysis -->
+            <div class="card" id="call-placeholder" style="text-align:center; padding:3.5rem 1.5rem;">
+              <div style="font-size:3rem; margin-bottom:1rem; opacity:0.6;">🎧</div>
+              <h3>Your call analysis will appear here.</h3>
+              <p style="max-width:38ch; margin:0.5rem auto 1.5rem; font-size:0.92rem; color:var(--text-muted);">
+                Upload an audio file or record speech on the left, then click <strong>Analyze Call Recording</strong>.
+              </p>
+              <div style="font-size:0.82rem; color:var(--text-dim); border-top:1px solid var(--navy-border); padding-top:1.25rem;">
+                Multilingual Speech-to-Text Support: <strong>English • हिन्दी • বাংলা</strong>
+              </div>
+            </div>
+
+            <!-- Scanning Progress Box -->
+            <div class="card scanning-card" id="call-scanning" style="display:none;">
+              <div class="scanning-radar">
+                <div class="scanning-radar-sweep"></div>
+                <span style="font-size:1.5rem; z-index:2;">🎙️</span>
+              </div>
+              <h3 style="color:#93C5FD; margin-bottom:0.5rem;" id="scanning-step-title">Processing Call Audio</h3>
+              <p style="font-size:0.88rem; color:var(--text-dim); max-width:34ch; margin:0 auto;" id="scanning-step-desc">
+                Transcribing conversation with speech recognition and extracting linguistic fraud patterns...
+              </p>
+              <div class="scanning-bar-wrap">
+                <div class="scanning-bar-fill"></div>
+              </div>
+              <span style="font-size:0.75rem; font-family:var(--font-mono); color:var(--cyan);">Audio analysis in progress</span>
+            </div>
+
+            <!-- Call Analysis Error State Card -->
+            <div class="card error-card" id="call-error-card" style="display:none;">
+              <div class="error-icon">⚠️</div>
+              <h3 id="call-error-title">Voice Analysis Failed</h3>
+              <p id="call-error-message">Unable to transcribe or screen call recording.</p>
+              <button type="button" class="btn btn-ghost btn-sm" id="btn-retry-call">
+                🔄 Try Again
+              </button>
+            </div>
+
+            <!-- Completed Result Card -->
+            <div class="card" id="call-result-card" style="display:none;">
+              <h3 style="margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center;">
+                <span>Voice Threat Assessment</span>
+                <span id="call-latency" style="font-size:0.8rem; font-family:var(--font-mono); color:var(--text-dim);"></span>
+              </h3>
+
+              <!-- Verdict Banner -->
+              <div class="verdict-box" id="call-banner">
+                <div class="verdict-icon" id="call-icon">⚠️</div>
+                <div>
+                  <div class="verdict-title" id="call-title">Potential Scam Call</div>
+                  <div class="verdict-sub" id="call-subtitle">Malicious conversational cues identified</div>
+                </div>
+              </div>
+
+              <!-- Metadata Chips Row -->
+              <div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:1.25rem;">
+                <span class="lang-badge" id="call-lang-badge">🌐 English</span>
+                <span class="lang-badge" id="call-risk-badge" style="background:rgba(239,68,68,0.15); color:#FCA5A5; border-color:rgba(239,68,68,0.3);">HIGH RISK</span>
+                <span class="lang-badge" id="call-duration-badge" style="background:rgba(255,255,255,0.05); color:var(--text-dim); border-color:var(--navy-border);">0.0s</span>
+              </div>
+
+              <!-- Transcript Panel -->
+              <div style="margin-bottom:1.25rem;">
+                <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; color:var(--text-dim); margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center;">
+                  <span>Transcribed Conversation</span>
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-toggle-translation" style="min-height:24px; padding:2px 8px; font-size:0.75rem; display:none;">
+                    Translate to English
+                  </button>
+                </div>
+                <div class="transcript-panel" id="call-transcript">
+                  <!-- Transcribed conversation rendered safely via textContent -->
+                </div>
+              </div>
+
+              <!-- Indicators Box -->
+              <div class="indicators-wrap" style="margin-bottom:1.25rem;">
+                <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; color:var(--text-dim);">
+                  Suspicious Phrases & Warning Indicators
+                </div>
+                <div class="indicators-list" id="call-indicators">
+                  <span class="tag-badge">None detected</span>
+                </div>
+              </div>
+
+              <!-- Localized Safety Recommendations -->
+              <div class="safety-checklist" id="call-safety-checklist">
+                <div class="safety-checklist-title">🛡️ Call Defense Protocol</div>
+                <div id="call-safety-items">
+                  <!-- Dynamically populated in native language -->
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem;">
+                <button type="button" class="btn btn-primary btn-sm" id="btn-download-call-pdf">
+                  📄 Download CallScam PDF Report
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-analyze-another-call">
+                  🔄 Analyze Another Call
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+  <script src="config.js?v=3.1"></script>
+  <script src="main.js?v=3.1"></script>
+  <script src="audio-recorder.js?v=3.1"></script>
+  <script src="callscam.js?v=3.1"></script>
+</body>
+</html>
