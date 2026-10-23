@@ -17,6 +17,8 @@
   let activeRecorder = null;
   let latestCallResult = null;
   let isViewingTranslation = false;
+  let activeMicGain = 2.5;
+  let liveSpeechRec = null;
 
   // DOM Elements
   const langButtons = document.querySelectorAll("#lang-selector .lang-btn");
@@ -30,6 +32,15 @@
   const recIndicator = document.getElementById("rec-indicator");
   const recStatusText = document.getElementById("rec-status-text");
   const recTimer = document.getElementById("rec-timer");
+
+  const micBoostChips = document.querySelectorAll("#mic-boost-options .mic-boost-chip");
+  const audioLevelContainer = document.getElementById("audio-level-container");
+  const audioLevelFill = document.getElementById("audio-level-fill");
+  const audioLevelVal = document.getElementById("audio-level-val");
+  const voiceActivityStatus = document.getElementById("voice-activity-status");
+  const liveSpeechBox = document.getElementById("live-speech-box");
+  const liveSpeechStatus = document.getElementById("live-speech-status");
+  const liveSpeechText = document.getElementById("live-speech-text");
 
   const previewBox = document.getElementById("audio-preview-box");
   const previewFilename = document.getElementById("preview-filename");
@@ -200,14 +211,39 @@
     return new Blob([view], { type: "audio/wav" });
   }
 
+  // 1b. Microphone Gain Boost Selection
+  if (micBoostChips) {
+    micBoostChips.forEach(chip => {
+      chip.addEventListener("click", () => {
+        micBoostChips.forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        const gain = parseFloat(chip.getAttribute("data-gain") || "2.5");
+        activeMicGain = gain;
+        if (activeRecorder && typeof activeRecorder.setGain === "function") {
+          activeRecorder.setGain(gain);
+        }
+        toast(`Voice boost set to: ${chip.textContent.trim()}`);
+      });
+    });
+  }
+
   // 3. Audio File Loading & Preview
-  function setLoadedAudio(blob, filename, duration) {
+  function setLoadedAudio(blob, filename, duration, boostInfo) {
     currentWavBlob = blob;
     currentFilename = filename || "call_recording.wav";
 
-    previewFilename.textContent = `📎 ${currentFilename} (${(blob.size / 1024).toFixed(1)} KB)`;
+    let label = `📎 ${currentFilename} (${(blob.size / 1024).toFixed(1)} KB)`;
+    if (boostInfo && boostInfo.boosted) {
+      label += ` · ⚡ Boosted ${boostInfo.boostFactor}x`;
+    }
+    previewFilename.textContent = label;
+
     if (duration) {
-      previewDuration.textContent = `Audio Duration: ~${duration} seconds`;
+      let durText = `Audio Duration: ~${duration} seconds`;
+      if (boostInfo && boostInfo.boosted) {
+        durText += ` · ⚡ Amplified ${boostInfo.boostFactor}x for low-voice clarity`;
+      }
+      previewDuration.textContent = durText;
     } else {
       previewDuration.textContent = "Audio ready for analysis";
     }
@@ -227,6 +263,8 @@
     audioPlayer.src = "";
     previewBox.style.display = "none";
     if (callErrorCard) callErrorCard.style.display = "none";
+    if (liveSpeechBox) liveSpeechBox.style.display = "none";
+    if (audioLevelContainer) audioLevelContainer.style.display = "none";
     btnAnalyzeCall.disabled = true;
     fileInput.value = "";
   }
@@ -262,10 +300,14 @@
     currentTranscriptHint = "";
     toast(`Processing audio file: ${file.name}...`);
     try {
-      // Normalize in browser to 16kHz WAV for zero-dependency server decoding
-      const { blob, duration } = await normalizeAudioFileToWav(file);
-      setLoadedAudio(blob, file.name, duration);
-      toast("Audio file loaded and normalized successfully", "success");
+      // Normalize in browser to 16kHz WAV and auto-amplify quiet recordings
+      const { blob, duration, boosted, boostFactor } = await normalizeAudioFileToWav(file);
+      setLoadedAudio(blob, file.name, duration, { boosted, boostFactor });
+      if (boosted) {
+        toast(`Loaded & amplified quiet audio (${boostFactor}x boost)`, "success");
+      } else {
+        toast("Audio file loaded and normalized successfully", "success");
+      }
     } catch (err) {
       // If decoding fails, check extension and pass raw file if WAV
       if (file.name.endsWith(".wav")) {
@@ -277,40 +319,140 @@
     }
   }
 
-  // 5. In-Browser Microphone Recording
+  // 5. In-Browser Microphone Recording with Voice Boost & Real-Time Feedback
   btnStartRecord.addEventListener("click", async () => {
     errorBox.hidden = true;
     try {
-      activeRecorder = new Recorder();
+      activeRecorder = new Recorder({
+        gain: activeMicGain,
+        autoBoost: true
+      });
+
       activeRecorder.onTick = (sec, formattedTime) => {
         recTimer.textContent = formattedTime;
       };
 
+      // Real-time Audio Level VU Meter
+      if (audioLevelContainer) {
+        audioLevelContainer.style.display = "block";
+      }
+
+      activeRecorder.onLevel = (level) => {
+        if (audioLevelFill) {
+          audioLevelFill.style.width = `${level.peakPercent}%`;
+        }
+        if (audioLevelVal) {
+          audioLevelVal.textContent = `${level.peakPercent}%`;
+        }
+        if (voiceActivityStatus) {
+          if (level.isVoice) {
+            if (level.isLowVoice) {
+              voiceActivityStatus.style.color = "#F59E0B";
+              voiceActivityStatus.textContent = "⚡ Low Voice · Auto-Boosting Signal";
+            } else {
+              voiceActivityStatus.style.color = "#10B981";
+              voiceActivityStatus.textContent = "🎙️ Clear Speech Detected";
+            }
+          } else {
+            voiceActivityStatus.style.color = "var(--text-dim)";
+            voiceActivityStatus.textContent = "Listening for speech...";
+          }
+        }
+      };
+
+      // Start Web Audio recording
       await activeRecorder.start();
 
       btnStartRecord.disabled = true;
       btnStopRecord.disabled = false;
       recIndicator.classList.add("active");
       recStatusText.textContent = "Recording in progress...";
-      toast("Microphone active. Speak clearly into your mic.", "info");
+
+      // Browser Web Speech API Live Assistant (if supported)
+      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRec) {
+        try {
+          liveSpeechRec = new SpeechRec();
+          liveSpeechRec.continuous = true;
+          liveSpeechRec.interimResults = true;
+          const langMap = { en: "en-IN", hi: "hi-IN", bn: "bn-IN", auto: "en-IN" };
+          liveSpeechRec.lang = langMap[currentLanguageHint] || "en-IN";
+
+          if (liveSpeechBox) liveSpeechBox.style.display = "block";
+          if (liveSpeechStatus) {
+            liveSpeechStatus.textContent = "Listening and transcribing...";
+            liveSpeechStatus.style.color = "#93C5FD";
+          }
+          if (liveSpeechText) {
+            liveSpeechText.textContent = "Speak into your mic or play call recording...";
+          }
+
+          liveSpeechRec.onresult = (evt) => {
+            let recognized = "";
+            for (let i = 0; i < evt.results.length; ++i) {
+              recognized += evt.results[i][0].transcript + " ";
+            }
+            const cleaned = recognized.trim();
+            if (cleaned) {
+              currentTranscriptHint = cleaned;
+              if (liveSpeechText) liveSpeechText.textContent = `"${cleaned}"`;
+              if (liveSpeechStatus) {
+                liveSpeechStatus.textContent = "✅ Voice detected & transcribed in real-time";
+                liveSpeechStatus.style.color = "#34D399";
+              }
+            }
+          };
+
+          liveSpeechRec.onerror = (e) => {
+            console.debug("[Live Speech Recognition event]", e.error);
+          };
+
+          liveSpeechRec.start();
+        } catch (recErr) {
+          console.debug("[Speech Recognition Init]", recErr);
+        }
+      }
+
+      toast("Microphone active with Auto-Boost enabled. Speak clearly into your mic.", "info");
     } catch (err) {
       errorBox.textContent = err.message || "Failed to start microphone recording.";
       errorBox.hidden = false;
+      if (audioLevelContainer) audioLevelContainer.style.display = "none";
     }
   });
 
   btnStopRecord.addEventListener("click", () => {
     if (!activeRecorder) return;
 
-    const { blob, duration } = activeRecorder.stop();
+    if (liveSpeechRec) {
+      try {
+        liveSpeechRec.stop();
+      } catch (e) {
+        // Ignored
+      }
+      liveSpeechRec = null;
+    }
+
+    if (audioLevelContainer) {
+      audioLevelContainer.style.display = "none";
+    }
+
+    const { blob, duration, boosted, boostFactor } = activeRecorder.stop();
     btnStartRecord.disabled = false;
     btnStopRecord.disabled = true;
     recIndicator.classList.remove("active");
     recStatusText.textContent = "Recording stopped";
-    currentTranscriptHint = "";
 
-    setLoadedAudio(blob, `Mic_Recording_${Date.now()}.wav`, duration);
-    toast(`Captured ${duration}s recording`, "success");
+    setLoadedAudio(blob, `Mic_Recording_${Date.now()}.wav`, duration, { boosted, boostFactor });
+
+    if (currentTranscriptHint) {
+      toast(`Captured ${duration}s recording with live speech detection!`, "success");
+    } else if (boosted) {
+      toast(`Captured ${duration}s recording (Amplified ${boostFactor}x)`, "success");
+    } else {
+      toast(`Captured ${duration}s recording`, "success");
+    }
+
     activeRecorder = null;
   });
 

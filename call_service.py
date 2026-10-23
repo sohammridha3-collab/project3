@@ -10,6 +10,7 @@ import wave
 import logging
 from typing import Dict, Any, List, Optional, Tuple
 
+import numpy as np
 import speech_recognition as sr
 from model_service import get_model_service
 
@@ -162,14 +163,53 @@ def get_wav_duration_seconds(file_path: str) -> Optional[float]:
     return None
 
 
+def boost_and_normalize_wav(wav_path: str, target_peak: int = 28000, max_gain: float = 15.0) -> float:
+    """
+    Amplifies and normalizes low-volume speech and call recordings so STT can accurately detect words.
+    Returns the gain factor applied.
+    """
+    try:
+        with wave.open(wav_path, "rb") as wf:
+            params = wf.getparams()
+            sampwidth = params.sampwidth
+            n_frames = params.nframes
+            raw_bytes = wf.readframes(n_frames)
+
+        if sampwidth == 2 and n_frames > 0:  # 16-bit PCM
+            data = np.frombuffer(raw_bytes, dtype=np.int16)
+            if len(data) == 0:
+                return 1.0
+
+            max_val = int(np.max(np.abs(data)))
+            # If the recording is quiet but contains sound (peak > 40)
+            if 40 < max_val < target_peak:
+                gain = min(target_peak / float(max_val), max_gain)
+                if gain > 1.08:
+                    boosted = np.clip(data.astype(np.float32) * gain, -32768, 32767).astype(np.int16)
+                    with wave.open(wav_path, "wb") as wf:
+                        wf.setparams(params)
+                        wf.writeframes(boosted.tobytes())
+                    logger.info(f"Boosted quiet audio by {gain:.2f}x (peak {max_val} -> {target_peak})")
+                    return gain
+    except Exception as exc:
+        logger.warning(f"Audio volume boost warning: {exc}")
+    return 1.0
+
+
 def transcribe_audio_file(wav_path: str, language_hint: str = "auto") -> Tuple[str, str, str]:
     """
     Transcribes audio using SpeechRecognition with automatic or requested language routing.
+    Includes adaptive low-volume audio amplification and multi-language fallbacks.
     Returns: (transcript_text, detected_lang_code, language_name)
     """
+    # 1. Pre-amplify quiet audio if needed
+    boost_and_normalize_wav(wav_path)
+
     recognizer = sr.Recognizer()
-    recognizer.energy_threshold = 300
+    recognizer.energy_threshold = 120
     recognizer.dynamic_energy_threshold = True
+    recognizer.dynamic_energy_adjustment_damping = 0.15
+    recognizer.dynamic_energy_ratio = 1.5
 
     try:
         with sr.AudioFile(wav_path) as source:
@@ -177,12 +217,16 @@ def transcribe_audio_file(wav_path: str, language_hint: str = "auto") -> Tuple[s
     except Exception as exc:
         raise ValueError(f"Audio format decoding error: {str(exc)}. Ensure the file is uncorrupted PCM WAV.")
 
-    # Determine candidate languages to test
-    if language_hint in ("hi", "bn", "en"):
-        languages_to_try = [SUPPORTED_LANGUAGES[language_hint]["code"]]
+    # Candidate languages with Indian English (en-IN) priority
+    if language_hint == "hi":
+        languages_to_try = ["hi-IN", "en-IN", "en-US"]
+    elif language_hint == "bn":
+        languages_to_try = ["bn-IN", "en-IN", "en-US"]
+    elif language_hint == "en":
+        languages_to_try = ["en-IN", "en-US", "hi-IN"]
     else:
-        # Default auto order: en-US, hi-IN, bn-IN
-        languages_to_try = ["en-US", "hi-IN", "bn-IN"]
+        # Default auto order: en-IN, en-US, hi-IN, bn-IN
+        languages_to_try = ["en-IN", "en-US", "hi-IN", "bn-IN"]
 
     transcript = ""
     used_lang_code = "en"

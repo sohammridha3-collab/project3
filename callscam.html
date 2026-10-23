@@ -82,18 +82,66 @@
                 <div class="rec-timer" id="rec-timer">00:00</div>
               </div>
 
+              <!-- Low-Voice & Call Recording Sensitivity Boost -->
+              <div class="mic-boost-row">
+                <span class="mic-boost-label">
+                  <span>⚡ Voice Gain Boost:</span>
+                </span>
+                <div class="mic-boost-options" id="mic-boost-options">
+                  <button type="button" class="mic-boost-chip active" data-gain="2.5" title="Recommended: Smart AGC amplification for low voice & phone call recordings">
+                    ⚡ Auto-Boost (2.5x AGC)
+                  </button>
+                  <button type="button" class="mic-boost-chip" data-gain="1.0" title="Standard input volume for close microphones">
+                    🎙️ Normal (1x)
+                  </button>
+                  <button type="button" class="mic-boost-chip" data-gain="5.0" title="Ultra high gain for very faint whisper or distant phone call speaker">
+                    🔊 Ultra (5x)
+                  </button>
+                </div>
+              </div>
+
+              <!-- Live Audio Level Meter -->
+              <div class="audio-level-container" id="audio-level-container" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; margin-bottom:0.4rem;">
+                  <span id="voice-activity-badge" style="color:var(--text-dim); display:flex; align-items:center; gap:0.35rem;">
+                    🎙️ Voice Activity: <strong id="voice-activity-status" style="color:#10B981;">Listening...</strong>
+                  </span>
+                  <span id="audio-level-val" style="font-family:var(--font-mono); color:#93C5FD; font-weight:600;">0%</span>
+                </div>
+                <div class="audio-level-track">
+                  <div class="audio-level-fill" id="audio-level-fill"></div>
+                </div>
+              </div>
+
+              <!-- Live Real-Time Speech Recognition Preview -->
+              <div class="live-speech-box" id="live-speech-box" style="display:none;">
+                <div class="live-speech-header">
+                  <span class="live-speech-tag">
+                    <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#3B82F6; animation:pulseDot 1.2s infinite ease-in-out;"></span>
+                    Live Speech Assistant
+                  </span>
+                  <span id="live-speech-status" style="font-size:0.75rem; color:#93C5FD;">Transcribing live voice...</span>
+                </div>
+                <div class="live-speech-text" id="live-speech-text">Speak into your mic or play call recording...</div>
+              </div>
+
               <!-- Consent & Limitations Notice -->
               <div class="consent-notice">
                 ⚖️ <strong>Legal Consent Notice:</strong> Ensure you have obtained consent from all recorded participants. Web browser recording captures your local microphone input, not cellular stream.
               </div>
 
-              <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+              <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
                 <button type="button" class="btn btn-primary btn-sm" id="btn-start-record">
                   🔴 Start Recording
                 </button>
                 <button type="button" class="btn btn-ghost btn-sm" id="btn-stop-record" disabled>
                   ⏹️ Stop Recording
                 </button>
+              </div>
+
+              <div style="font-size:0.75rem; color:var(--text-dim); margin-top:0.75rem; display:flex; align-items:center; gap:0.4rem;">
+                <span>💡</span>
+                <span><strong>Low Voice / Call Audio Help:</strong> If speaking quietly or playing a call recording, Auto-Boost amplifies audio up to 15x so AI can detect every word.</span>
               </div>
             </div>
 

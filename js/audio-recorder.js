@@ -1,6 +1,7 @@
 /* ==========================================================================
    ScamShield AI — Audio Recorder & In-Browser PCM WAV Normalizer
-   Captures microphone audio and converts uploads to clean 16kHz 16-bit mono WAV
+   Captures microphone audio, boosts low-voice recordings, and normalizes
+   uploaded call audio to clean 16kHz 16-bit mono WAV.
    Zero external libraries required (Pure Web Audio API)
    ========================================================================== */
 
@@ -74,21 +75,75 @@
     return result;
   }
 
+  // Automatic Gain Control (AGC) & Peak Normalization for Low-Voice and Quiet Call Audio
+  function normalizePcmSamples(samples, targetPeak = 0.92, maxBoost = 15.0) {
+    let peak = 0;
+    for (let i = 0; i < samples.length; i++) {
+      const abs = Math.abs(samples[i]);
+      if (abs > peak) peak = abs;
+    }
+
+    // Only amplify if sound is non-zero (above ambient silence threshold 0.002)
+    if (peak > 0.002) {
+      const gainFactor = Math.min(targetPeak / peak, maxBoost);
+      if (gainFactor > 1.05) {
+        const output = new Float32Array(samples.length);
+        for (let i = 0; i < samples.length; i++) {
+          const scaled = samples[i] * gainFactor;
+          // Soft clamp to avoid harsh digital clipping
+          output[i] = Math.max(-1, Math.min(1, scaled));
+        }
+        return {
+          samples: output,
+          boosted: true,
+          factor: Math.round(gainFactor * 10) / 10,
+          originalPeak: peak
+        };
+      }
+    }
+
+    return {
+      samples: samples,
+      boosted: false,
+      factor: 1.0,
+      originalPeak: peak
+    };
+  }
+
   // Audio Recorder Class
   class ScamAudioRecorder {
-    constructor() {
+    constructor(options = {}) {
       this.stream = null;
       this.audioContext = null;
       this.scriptProcessor = null;
       this.audioSource = null;
+      this.gainNode = null;
+      this.analyser = null;
+      this.muteNode = null;
       this.recordedChunks = [];
       this.isRecording = false;
       this.timerInterval = null;
       this.elapsedSeconds = 0;
 
+      // Gain multiplier (default 2.5x pre-amplification for low voices / call recordings)
+      this.gainMultiplier = typeof options.gain === "number" ? options.gain : 2.5;
+      this.autoBoost = options.autoBoost !== false;
+
       this.onTick = null;
       this.onStop = null;
       this.onError = null;
+      this.onLevel = null; // Real-time volume meter & voice detector callback
+    }
+
+    setGain(multiplier) {
+      this.gainMultiplier = Math.max(0.5, Math.min(10.0, multiplier));
+      if (this.gainNode && this.audioContext) {
+        try {
+          this.gainNode.gain.setValueAtTime(this.gainMultiplier, this.audioContext.currentTime);
+        } catch (e) {
+          this.gainNode.gain.value = this.gainMultiplier;
+        }
+      }
     }
 
     async start() {
@@ -99,20 +154,45 @@
           throw new Error("Microphone recording is not supported in this browser environment.");
         }
 
-        // Request permission explicitly
-        this.stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            channelCount: 1,
-            echoCancellation: true,
-            noiseSuppression: true
-          }
-        });
+        // Request audio with optimal speech recognition settings
+        // Disabling noiseSuppression prevents webRTC from cutting quiet voices & whispers
+        let stream = null;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              channelCount: 1,
+              echoCancellation: true,
+              noiseSuppression: false, // Critical: keeps low voice and soft calls intact
+              autoGainControl: true,   // System/hardware auto-gain
+              googAutoGainControl: true,
+              googNoiseSuppression: false,
+              googHighpassFilter: false
+            }
+          });
+        } catch (e) {
+          // Fallback to basic audio constraint if device doesn't support advanced keys
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+        this.stream = stream;
 
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         this.audioContext = new AudioContextClass();
+        if (this.audioContext.state === "suspended") {
+          await this.audioContext.resume();
+        }
+
         this.audioSource = this.audioContext.createMediaStreamSource(this.stream);
-        
-        // Use ScriptProcessorNode to capture raw PCM samples
+
+        // Hardware/Software Gain Booster Node for low voice & call recordings
+        this.gainNode = this.audioContext.createGain();
+        this.gainNode.gain.setValueAtTime(this.gainMultiplier, this.audioContext.currentTime);
+
+        // Analyser node for live volume VU meter
+        this.analyser = this.audioContext.createAnalyser();
+        this.analyser.fftSize = 512;
+        this.analyser.smoothingTimeConstant = 0.3;
+
+        // ScriptProcessorNode to capture raw PCM samples
         this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
         this.recordedChunks = [];
 
@@ -120,10 +200,44 @@
           if (!this.isRecording) return;
           const input = e.inputBuffer.getChannelData(0);
           this.recordedChunks.push(new Float32Array(input));
+
+          // Calculate real-time RMS and peak volume
+          let sumSquares = 0;
+          let maxAbs = 0;
+          for (let i = 0; i < input.length; i++) {
+            const val = input[i];
+            const absVal = Math.abs(val);
+            if (absVal > maxAbs) maxAbs = absVal;
+            sumSquares += val * val;
+          }
+          const rms = Math.sqrt(sumSquares / input.length);
+          const rmsPercent = Math.min(100, Math.round(rms * 450));
+          const peakPercent = Math.min(100, Math.round(maxAbs * 125));
+          const isVoice = rms > 0.006 || maxAbs > 0.025;
+          const isLowVoice = isVoice && (maxAbs < 0.2 || rms < 0.04);
+
+          if (typeof this.onLevel === "function") {
+            this.onLevel({
+              rmsPercent,
+              peakPercent,
+              isVoice,
+              isLowVoice,
+              rms,
+              maxAbs
+            });
+          }
         };
 
-        this.audioSource.connect(this.scriptProcessor);
-        this.scriptProcessor.connect(this.audioContext.destination);
+        // Connect chain: source -> gain -> analyser -> scriptProcessor -> muteNode -> destination
+        this.audioSource.connect(this.gainNode);
+        this.gainNode.connect(this.analyser);
+        this.analyser.connect(this.scriptProcessor);
+
+        // Silent node before destination prevents speaker feedback while keeping processor active
+        this.muteNode = this.audioContext.createGain();
+        this.muteNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+        this.scriptProcessor.connect(this.muteNode);
+        this.muteNode.connect(this.audioContext.destination);
 
         this.isRecording = true;
         this.elapsedSeconds = 0;
@@ -141,7 +255,7 @@
       } catch (err) {
         this.cleanup();
         if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-          throw new Error("Microphone access was denied. Please grant permission in your browser to record audio.");
+          throw new Error("Microphone access was denied. Please grant microphone permission in your browser to record audio.");
         }
         throw err;
       }
@@ -171,17 +285,28 @@
       };
       const downsampledSamples = downsampleAudioBuffer(fakeAudioBuffer, 16000);
 
+      // Dynamic Auto-Gain Normalization for Low Voice and Quiet Audio
+      const norm = normalizePcmSamples(downsampledSamples, 0.92, 15.0);
+
       // Create standard WAV Blob
-      const wavBlob = encodeWAV(downsampledSamples, 16000);
-      const duration = Math.round((downsampledSamples.length / 16000) * 10) / 10;
+      const wavBlob = encodeWAV(norm.samples, 16000);
+      const duration = Math.round((norm.samples.length / 16000) * 10) / 10;
 
       this.cleanup();
 
+      const result = {
+        blob: wavBlob,
+        duration: duration,
+        boosted: norm.boosted,
+        boostFactor: norm.factor,
+        originalPeak: norm.originalPeak
+      };
+
       if (typeof this.onStop === "function") {
-        this.onStop(wavBlob, duration);
+        this.onStop(wavBlob, duration, result);
       }
 
-      return { blob: wavBlob, duration };
+      return result;
     }
 
     cleanup() {
@@ -190,6 +315,18 @@
       if (this.scriptProcessor) {
         this.scriptProcessor.disconnect();
         this.scriptProcessor = null;
+      }
+      if (this.muteNode) {
+        this.muteNode.disconnect();
+        this.muteNode = null;
+      }
+      if (this.analyser) {
+        this.analyser.disconnect();
+        this.analyser = null;
+      }
+      if (this.gainNode) {
+        this.gainNode.disconnect();
+        this.gainNode = null;
       }
       if (this.audioSource) {
         this.audioSource.disconnect();
@@ -208,6 +345,7 @@
   }
 
   // Converts any uploaded audio file (MP3, M4A, WebM, OGG, WAV) to a normalized 16kHz PCM WAV Blob
+  // Automatically amplifies quiet call recordings
   async function normalizeAudioFileToWav(file) {
     const arrayBuffer = await file.arrayBuffer();
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -216,9 +354,16 @@
     try {
       const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
       const downsampledSamples = downsampleAudioBuffer(decodedBuffer, 16000);
-      const wavBlob = encodeWAV(downsampledSamples, 16000);
-      const duration = Math.round((downsampledSamples.length / 16000) * 10) / 10;
-      return { blob: wavBlob, duration };
+      const norm = normalizePcmSamples(downsampledSamples, 0.92, 15.0);
+      const wavBlob = encodeWAV(norm.samples, 16000);
+      const duration = Math.round((norm.samples.length / 16000) * 10) / 10;
+      return {
+        blob: wavBlob,
+        duration: duration,
+        boosted: norm.boosted,
+        boostFactor: norm.factor,
+        originalPeak: norm.originalPeak
+      };
     } finally {
       ctx.close();
     }
@@ -227,7 +372,8 @@
   // Expose to window.ScamAudio
   window.ScamAudio = Object.freeze({
     Recorder: ScamAudioRecorder,
-    normalizeAudioFileToWav: normalizeAudioFileToWav
+    normalizeAudioFileToWav: normalizeAudioFileToWav,
+    normalizePcmSamples: normalizePcmSamples
   });
 
 })();
