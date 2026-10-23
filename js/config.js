@@ -1,9 +1,9 @@
 /* ==========================================================================
    Centralized Frontend API Configuration for ScamShield AI
-   Deployed Render Backend: https://project3-backend-fzlv.onrender.com
+   Deployed Render Backend: https://project3-back-y3cj.onrender.com
    ========================================================================== */
 
-const API_BASE_URL = "https://project3-backend-fzlv.onrender.com";
+const API_BASE_URL = "https://project3-back-y3cj.onrender.com";
 
 // Expose globally for direct access or non-module scripts
 if (typeof window !== "undefined") {
@@ -48,7 +48,7 @@ if (typeof window !== "undefined") {
     if (typeof window !== "undefined" && window.location && window.location.origin) {
       const origin = window.location.origin;
       const hostname = window.location.hostname;
-      if (origin === API_BASE_URL || hostname === "project3-backend-fzlv.onrender.com") {
+      if (origin === API_BASE_URL || hostname === "project3-back-y3cj.onrender.com") {
         return origin;
       }
     }

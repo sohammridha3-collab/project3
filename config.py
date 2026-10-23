@@ -47,7 +47,7 @@ PORT = int(os.getenv("PORT", "8001"))
 # CORS Allowed Origins
 # Supports local frontend development servers (React, Vue, Vite, Next.js, Live Server)
 DEFAULT_ORIGINS = [
-    "https://project3-backend-fzlv.onrender.com",
+    "https://project3-back-y3cj.onrender.com",
     "http://localhost:3000",
     "http://localhost:5173",
     "http://localhost:5500",
