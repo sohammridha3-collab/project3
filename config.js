@@ -44,12 +44,30 @@ if (typeof window !== "undefined") {
       }
     } catch (_) {}
 
-    // 4. If served directly by the backend itself (unified full-stack host on Render)
-    if (typeof window !== "undefined" && window.location && window.location.origin) {
-      const origin = window.location.origin;
-      const hostname = window.location.hostname;
+    // 4. Host environment detection
+    if (typeof window !== "undefined" && window.location) {
+      const origin = window.location.origin || "";
+      const hostname = window.location.hostname || "";
+      const port = window.location.port || "";
+      const protocol = window.location.protocol || "";
+
+      // 4a. If served directly by backend on Render
       if (origin === API_BASE_URL || hostname === "project3-backend-fzlv.onrender.com") {
         return origin;
+      }
+
+      // 4b. If served directly by local backend (e.g. port 8001 or 8000)
+      if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0") {
+        if (port === "8001" || port === "8000") {
+          return origin;
+        }
+        // If served by Live Server (e.g. 5500, 3000, 5173), prefer local backend on 8001
+        return "http://127.0.0.1:8001";
+      }
+
+      // 4c. If opened via file:// protocol
+      if (protocol === "file:") {
+        return "http://127.0.0.1:8001";
       }
     }
 

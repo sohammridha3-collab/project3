@@ -211,7 +211,10 @@
             <!-- Dynamic Result Card -->
             <div class="card" id="url-result-card" style="display:none;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-                <h3 style="margin:0;">Security Verdict</h3>
+                <div style="display:flex; align-items:center; gap:0.6rem;">
+                  <h3 style="margin:0;">Security Verdict</h3>
+                  <span id="scan-engine-badge" style="font-size:0.75rem; padding:2px 8px; border-radius:6px; font-weight:600; display:inline-flex; align-items:center; gap:4px; background:rgba(6,182,212,0.15); color:#67E8F9; border:1px solid rgba(6,182,212,0.3);">🛡️ Cyber Defense Engine</span>
+                </div>
                 <span id="scan-timestamp-badge" style="font-size:0.78rem; font-family:var(--font-mono); color:var(--text-dim);"></span>
               </div>
 

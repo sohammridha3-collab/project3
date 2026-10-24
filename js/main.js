@@ -179,6 +179,23 @@
       clearTimeout(timeout);
       return data;
     } catch (err) {
+      // Automatic failover between Render and Localhost if primary returns 404, 405, 502, 503, or connection failure
+      const isOutdatedOrDown = (err instanceof ApiError && [404, 405, 502, 503].includes(err.status)) || !(err instanceof ApiError);
+      const isRemote = baseUrl.includes("onrender.com");
+      const fallbackBase = isRemote ? "http://127.0.0.1:8001" : "https://project3-backend-fzlv.onrender.com";
+
+      if (isOutdatedOrDown && !endpoint.startsWith("http")) {
+        try {
+          const fallbackUrl = `${fallbackBase}${endpoint}`;
+          console.warn(`[ScamShield AI] Primary API at ${baseUrl} returned ${err.status || 'connection error'}. Attempting fallback to ${fallbackBase}...`);
+          const fallbackData = await executeFetch(fallbackUrl);
+          clearTimeout(timeout);
+          return fallbackData;
+        } catch (fallbackErr) {
+          console.warn(`[ScamShield AI] Fallback API at ${fallbackBase} also unavailable:`, fallbackErr.message);
+        }
+      }
+
       clearTimeout(timeout);
       if (err.name === "AbortError") {
         throw new ApiError(408, "The server took too long to respond. The Render backend may be waking up from sleep (cold start). Please wait a moment and try again.");
