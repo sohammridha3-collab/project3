@@ -47,10 +47,13 @@ from schemas import (
     TokenResponse,
     ScanRecordResponse,
     ScanStatsResponse,
-    CallScanResponse
+    CallScanResponse,
+    UrlScanRequest,
+    UrlScanResponse
 )
 from model_service import get_model_service, ModelLoadError
 from call_service import validate_audio_file, analyze_call_audio
+from url_scanner_service import scan_url, SsrfBlockError
 
 # Setup logging
 logging.basicConfig(
@@ -307,25 +310,99 @@ async def predict_batch(payload: BatchMessageInput):
 
 
 # =============================================================================
+# URL & WEBSITE SCANNER ENDPOINT (SSRF-PROTECTED)
+# =============================================================================
+
+@app.post("/api/url-scan", response_model=UrlScanResponse, tags=["URL Scanner"])
+async def scan_website_url(
+    payload: UrlScanRequest,
+    user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Performs deterministic, SSRF-safe analysis of a website URL.
+    - Inspects structural indicators, punycode, misleading userinfo (@), and IP hosts.
+    - Inspects HTTPS status and verifies TLS certificates safely.
+    - Checks live reputation feeds if configured (transparently reports when not configured).
+    - Safely traces HTTP redirects enforcing strict timeouts, size limits, and per-hop SSRF validation.
+    - Computes deterministic threat risk score and outputs actionable defense recommendations.
+    - If user is authenticated, preserves scan record in their isolated audit history.
+    """
+    if not payload.url or not payload.url.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="URL parameter cannot be empty."
+        )
+
+    try:
+        result = scan_url(payload.url.strip())
+    except SsrfBlockError as ssrf_err:
+        logger.warning(f"Blocked SSRF attempt: {ssrf_err}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Security violation: Access to destination is prohibited by SSRF security policy ({str(ssrf_err)})."
+        )
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(ve)
+        )
+    except Exception as exc:
+        logger.error(f"URL analysis failed: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while evaluating the destination URL. Please verify the URL and try again."
+        )
+
+    scan_id = None
+    if user is not None:
+        try:
+            reg_dom = result.get("domain_info", {}).get("registered_domain") or result.get("domain_info", {}).get("host") or "URL"
+            scan_rec = ScanRecord(
+                user_id=user.id,
+                message_text=result["url"],
+                subject=f"URL: {reg_dom}",
+                message_type="url",
+                predicted_label=1 if result["classification"] in ("Suspicious", "High Risk") else 0,
+                predicted_class=result["classification"],
+                is_scam=result["classification"] in ("Suspicious", "High Risk"),
+                confidence=result["risk_score"] / 100.0,
+                decision_margin=None,
+                risk_level=result["classification"].upper().replace(" ", "_"),
+                indicators_json=json.dumps(result["findings"])
+            )
+            db.add(scan_rec)
+            db.commit()
+            db.refresh(scan_rec)
+            scan_id = scan_rec.id
+        except Exception as db_err:
+            logger.error(f"Failed to persist URL scan history: {db_err}")
+            db.rollback()
+
+    result["scan_id"] = scan_id
+    return UrlScanResponse(**result)
+
+
+# =============================================================================
 # SCAN HISTORY & USER STATS ENDPOINTS (PROTECTED)
 # =============================================================================
 
 @app.get("/api/scans/history", response_model=List[ScanRecordResponse], tags=["History"])
 async def get_user_scan_history(
     filter_type: str = Query("all", pattern="^(all|scam|legitimate)$"),
-    record_type: str = Query("all", pattern="^(all|message|call)$"),
+    record_type: str = Query("all", pattern="^(all|message|call|url)$"),
     search: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Returns past scans (both messages and audio call analyses) belonging solely to the logged-in user with search & filtering."""
+    """Returns past scans (messages, audio call analyses, and URL scans) belonging solely to the logged-in user with search & filtering."""
     response_items = []
 
-    # 1. Fetch Message Records
+    # 1. Fetch Message Records (excluding URL scans)
     if record_type in ("all", "message"):
-        msg_query = db.query(ScanRecord).filter(ScanRecord.user_id == user.id)
+        msg_query = db.query(ScanRecord).filter(ScanRecord.user_id == user.id, ScanRecord.message_type != "url")
         if filter_type == "scam":
             msg_query = msg_query.filter(ScanRecord.is_scam == True)
         elif filter_type == "legitimate":
@@ -361,7 +438,47 @@ async def get_user_scan_history(
                 )
             )
 
-    # 2. Fetch Call Records
+    # 2. Fetch URL Scan Records
+    if record_type in ("all", "url"):
+        url_query = db.query(ScanRecord).filter(ScanRecord.user_id == user.id, ScanRecord.message_type == "url")
+        if filter_type == "scam":
+            url_query = url_query.filter(ScanRecord.is_scam == True)
+        elif filter_type == "legitimate":
+            url_query = url_query.filter(ScanRecord.is_scam == False)
+
+        if search:
+            search_term = f"%{search.strip()}%"
+            url_query = url_query.filter(
+                or_(
+                    ScanRecord.message_text.ilike(search_term),
+                    ScanRecord.subject.ilike(search_term)
+                )
+            )
+
+        for r in url_query.all():
+            response_items.append(
+                ScanRecordResponse(
+                    id=r.id,
+                    record_type="url",
+                    user_id=r.user_id,
+                    message_text=r.message_text,
+                    subject=r.subject or "URL Scan",
+                    message_type="url",
+                    predicted_label=r.predicted_label,
+                    predicted_class=r.predicted_class,
+                    is_scam=r.is_scam,
+                    confidence=r.confidence,
+                    confidence_percentage=f"{round(r.confidence * 100, 1)}%",
+                    decision_margin=r.decision_margin,
+                    risk_level=r.risk_level,
+                    indicators_detected=r.indicators_list,
+                    created_at=r.created_at,
+                    url=r.message_text,
+                    normalized_url=r.message_text
+                )
+            )
+
+    # 3. Fetch Call Records
     if record_type in ("all", "call"):
         call_query = db.query(CallScanRecord).filter(CallScanRecord.user_id == user.id)
         if filter_type == "scam":
@@ -413,7 +530,7 @@ async def get_user_scan_history(
 
 @app.get("/api/scans/stats", response_model=ScanStatsResponse, tags=["Dashboard"])
 async def get_user_scan_stats(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Returns analytics and summary metrics combining messages and call scans for the user's dashboard."""
+    """Returns analytics and summary metrics combining messages, call scans, and URL scans for the user's dashboard."""
     msg_scans = db.query(ScanRecord).filter(ScanRecord.user_id == user.id).all()
     call_scans = db.query(CallScanRecord).filter(CallScanRecord.user_id == user.id).all()
 
@@ -424,10 +541,11 @@ async def get_user_scan_stats(user: User = Depends(get_current_user), db: Sessio
 
     recent_items = []
     for r in msg_scans:
+        rec_type = "url" if r.message_type == "url" else "message"
         recent_items.append(
             ScanRecordResponse(
                 id=r.id,
-                record_type="message",
+                record_type=rec_type,
                 user_id=r.user_id,
                 message_text=r.message_text,
                 subject=r.subject,
@@ -440,9 +558,12 @@ async def get_user_scan_stats(user: User = Depends(get_current_user), db: Sessio
                 decision_margin=r.decision_margin,
                 risk_level=r.risk_level,
                 indicators_detected=r.indicators_list,
-                created_at=r.created_at
+                created_at=r.created_at,
+                url=r.message_text if rec_type == "url" else None,
+                normalized_url=r.message_text if rec_type == "url" else None
             )
         )
+
     for c in call_scans:
         recent_items.append(
             ScanRecordResponse(
@@ -493,11 +614,11 @@ async def clear_all_user_history(user: User = Depends(get_current_user), db: Ses
 @app.delete("/api/scans/{scan_id}", tags=["History"])
 async def delete_scan_record(
     scan_id: int,
-    record_type: Optional[str] = Query(None, pattern="^(message|call)$"),
+    record_type: Optional[str] = Query(None, pattern="^(message|call|url)$"),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Deletes a specific scan record (message or call) belonging to the authenticated user."""
+    """Deletes a specific scan record (message, call, or URL scan) belonging to the authenticated user."""
     if record_type == "call":
         rec = db.query(CallScanRecord).filter(CallScanRecord.id == scan_id, CallScanRecord.user_id == user.id).first()
         if not rec:
@@ -505,7 +626,7 @@ async def delete_scan_record(
         db.delete(rec)
         db.commit()
         return {"status": "success", "message": f"Call scan record #{scan_id} deleted successfully."}
-    elif record_type == "message":
+    elif record_type in ("message", "url"):
         rec = db.query(ScanRecord).filter(ScanRecord.id == scan_id, ScanRecord.user_id == user.id).first()
         if not rec:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan record not found or unauthorized.")
@@ -852,7 +973,8 @@ FRONTEND_PAGES = [
     "history.html",
     "how-it-works.html",
     "model-performance.html",
-    "about.html"
+    "about.html",
+    "urlscan.html"
 ]
 
 

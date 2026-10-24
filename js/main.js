@@ -213,6 +213,7 @@
       ["index.html", "Home"],
       ["analyze.html", "Analyze"],
       ["callscam.html", "CallScam"],
+      ["urlscan.html", "URL Scanner"],
       ["details.html", "Details"]
     ];
 
@@ -287,6 +288,7 @@
         el("ul", {}, [
           el("li", {}, [el("a", { href: "analyze.html" }, ["Analyze Message"])]),
           el("li", {}, [el("a", { href: "callscam.html" }, ["CallScam Detection"])]),
+          el("li", {}, [el("a", { href: "urlscan.html" }, ["URL Scanner"])]),
           el("li", {}, [el("a", { href: "details.html#overview" }, ["Project Overview"])]),
           el("li", {}, [el("a", { href: "details.html#how-it-works" }, ["How It Works"])]),
           el("li", {}, [el("a", { href: "details.html#performance" }, ["Model Performance"])]),

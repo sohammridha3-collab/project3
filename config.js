@@ -100,7 +100,9 @@ if (typeof window !== "undefined") {
       callScamAnalyze: "/api/callscam/analyze",
       downloadCallReportById: function (id) { return `/api/callscam/${id}/report.pdf`; },
       downloadCustomCallReport: "/api/callscam/report/download",
-      deleteCallRecord: function (id) { return `/api/callscam/${id}`; }
+      deleteCallRecord: function (id) { return `/api/callscam/${id}`; },
+      // URL Scanner
+      urlScan: "/api/url-scan"
     }),
     REQUEST_TIMEOUT_MS: 60000,
     MAX_CHARS: 20000

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>URL & Website Scanner · ScamShield AI</title>
+  <meta name="description" content="Screen suspicious website links, URLs, and web domains for phishing indicators, homoglyphs, TLS validity, and redirect manipulation with SSRF protection.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
+  <style>
+    /* Security Check Item Styles matching ScamShield theme */
+    .checks-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      margin-top: 0.75rem;
+    }
+    .check-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--navy-border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      transition: border-color 0.2s ease;
+    }
+    .check-item:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .check-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .check-name {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: #E2E8F0;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .check-cat {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .check-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+    }
+    .check-badge.pass {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .check-badge.warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: #FBBF24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+    .check-badge.fail {
+      background: rgba(239, 68, 68, 0.15);
+      color: #F87171;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    .check-badge.info {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38BDF8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+    .check-badge.unavailable {
+      background: rgba(148, 163, 184, 0.15);
+      color: #94A3B8;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+    .check-detail {
+      font-size: 0.8rem;
+      color: #94A3B8;
+      line-height: 1.45;
+    }
+    .disclaimer-card {
+      background: rgba(30, 41, 59, 0.4);
+      border-left: 3px solid var(--cyan);
+      padding: 0.85rem 1rem;
+      border-radius: 4px;
+      margin-top: 1.25rem;
+      font-size: 0.82rem;
+      color: #94A3B8;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header" id="site-header"></header>
+
+  <main id="main">
+    <div class="page-header">
+      <div class="wrap">
+        <h1>Suspicious URL & Website Scanner</h1>
+        <p>Screen target web addresses for phishing lures, homoglyphs, brand spoofing, TLS validity, and redirect manipulation with server-side SSRF protection.</p>
+      </div>
+    </div>
+
+    <section class="block">
+      <div class="wrap">
+        <div class="workspace-grid">
+          
+          <!-- Left Column: Input Form -->
+          <div class="card tilt">
+            <h3 style="margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
+              <span>Target Website Input</span>
+              <span style="font-size:0.8rem; color:var(--cyan); font-weight:normal;">SSRF-Safe Engine</span>
+            </h3>
+
+            <!-- Quick Presets -->
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.4rem; font-weight:600; text-transform:uppercase;">Quick Test Samples:</div>
+            <div class="preset-chips">
+              <span class="chip" data-sample="https://www.wikipedia.org">✅ Legit Domain</span>
+              <span class="chip" data-sample="http://paypal.verification-portal.account-security.badsite.com/login">🚨 Phishing Subdomain</span>
+              <span class="chip" data-sample="https://google.com@phishing-target.xyz/auth">⚠️ Deceptive @ Symbol</span>
+              <span class="chip" data-sample="https://xn--pple-43d.com">🔍 Punycode IDN</span>
+              <span class="chip" data-sample="https://bit.ly/example-shortener">🔗 URL Shortener</span>
+            </div>
+
+            <form id="urlscan-form" novalidate style="margin-top:1rem;">
+              <div class="form-group">
+                <label class="form-label" for="target-url">Website URL (http:// or https://)</label>
+                <input 
+                  type="text" 
+                  id="target-url" 
+                  name="url" 
+                  placeholder="https://example.com/login" 
+                  autocomplete="off"
+                  spellcheck="false"
+                  style="font-family:var(--font-mono); font-size:0.92rem; padding:0.75rem 0.9rem;"
+                  required
+                >
+                <div class="form-tools">
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-paste-url">📋 Paste</button>
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-clear-url">🗑️ Clear</button>
+                </div>
+              </div>
+
+              <div id="urlscan-error" class="form-error" hidden role="alert"></div>
+
+              <button type="submit" id="btn-scan" class="btn btn-primary" style="width:100%; margin-top:0.75rem;">
+                <span id="btn-scan-text">🛡️ Scan Website with Security Engine</span>
+              </button>
+
+              <div style="font-size:0.82rem; color:var(--text-dim); margin-top:1.25rem; line-height:1.6; border-top:1px solid var(--navy-border); padding-top:1rem;">
+                🔒 <strong>Server-Side Protection:</strong> ScamShield never opens scanned links in your browser or executes scripts. Private addresses, loopbacks, and cloud metadata endpoints are strictly blocked by our SSRF firewall.
+              </div>
+            </form>
+          </div>
+
+          <!-- Right Column: Live Result Panel -->
+          <div>
+            
+            <!-- Default Placeholder Card -->
+            <div class="card" id="url-placeholder" style="text-align:center; padding:3.5rem 1.5rem;">
+              <div style="font-size:3rem; margin-bottom:1rem; opacity:0.6;">🌐</div>
+              <h3>Website scan results will appear here.</h3>
+              <p style="max-width:40ch; margin:0.5rem auto 1.5rem; font-size:0.92rem; color:var(--text-muted);">
+                Enter a target URL on the left or select one of the quick test presets, then click <strong>Scan Website with Security Engine</strong>.
+              </p>
+              <div style="font-size:0.82rem; color:var(--text-dim); border-top:1px solid var(--navy-border); padding-top:1.25rem;">
+                Inspection Surface: <strong>Domain Structure • Homoglyphs • TLS Verification • Redirect Traversal</strong>
+              </div>
+            </div>
+
+            <!-- Scanning in Progress Animation -->
+            <div class="card scanning-card" id="url-scanning" style="display:none;">
+              <div class="scanning-radar">
+                <div class="scanning-radar-sweep"></div>
+                <span style="font-size:1.5rem; z-index:2;">🛡️</span>
+              </div>
+              <h3 style="color:#93C5FD; margin-bottom:0.5rem;">Evaluating Web Address</h3>
+              <p style="font-size:0.88rem; color:var(--text-dim); max-width:34ch; margin:0 auto;" id="scanning-status-text">
+                Resolving DNS safely, inspecting SSL/TLS certificates, and checking for homoglyph / redirect manipulation...
+              </p>
+              <div class="scanning-bar-wrap">
+                <div class="scanning-bar-fill"></div>
+              </div>
+              <span style="font-size:0.75rem; font-family:var(--font-mono); color:var(--cyan);">SSRF-safe probe in progress</span>
+            </div>
+
+            <!-- Error State Card -->
+            <div class="card error-card" id="url-error-card" style="display:none;">
+              <div class="error-icon">⚠️</div>
+              <h3 id="res-error-title">URL Inspection Request Failed</h3>
+              <p id="res-error-message" style="margin-bottom:1rem;">Unable to complete analysis for this web destination.</p>
+              <button type="button" class="btn btn-ghost btn-sm" id="btn-retry-url">
+                🔄 Try Again
+              </button>
+            </div>
+
+            <!-- Dynamic Result Card -->
+            <div class="card" id="url-result-card" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+                <h3 style="margin:0;">Security Verdict</h3>
+                <span id="scan-timestamp-badge" style="font-size:0.78rem; font-family:var(--font-mono); color:var(--text-dim);"></span>
+              </div>
+
+              <!-- Verdict Banner -->
+              <div class="verdict-box" id="res-verdict-box">
+                <div class="verdict-icon" id="res-verdict-icon">⚠️</div>
+                <div style="min-width:0; flex:1;">
+                  <div class="verdict-title" id="res-verdict-title">Suspicious URL</div>
+                  <div class="verdict-sub" id="res-verdict-subtitle" style="word-break:break-all; font-family:var(--font-mono); font-size:0.82rem;">https://...</div>
+                </div>
+              </div>
+
+              <!-- Risk Score Meter -->
+              <div class="meter-wrapper" style="margin-top:1.25rem;">
+                <div class="meter-labels">
+                  <span>Threat Likelihood Score</span>
+                  <span id="res-threat-score" style="font-family:var(--font-mono); font-weight:700;">0.0 / 100</span>
+                </div>
+                <div class="meter-track">
+                  <div class="meter-fill" id="res-threat-bar" style="width:0%;"></div>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;" id="res-score-desc">
+                  Deterministic threat evaluation based on observed domain heuristics, encryption status, and redirects.
+                </div>
+              </div>
+
+              <!-- Technical Tiles -->
+              <div class="metrics-2col" style="margin-top:1.25rem;">
+                <div class="metric-tile">
+                  <div class="k">Registered Domain</div>
+                  <div class="v" id="tile-domain" style="font-size:0.95rem; word-break:break-all;">--</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Resolved IP Address</div>
+                  <div class="v" id="tile-ip" style="font-size:0.95rem; font-family:var(--font-mono);">--</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Encryption & TLS</div>
+                  <div class="v" id="tile-tls" style="font-size:0.95rem;">--</div>
+                </div>
+                <div class="metric-tile">
+                  <div class="k">Redirect Hops</div>
+                  <div class="v" id="tile-redirects" style="font-size:0.95rem;">--</div>
+                </div>
+              </div>
+
+              <!-- Security Checks Accordion/List -->
+              <div style="margin-top:1.5rem;">
+                <div style="font-size:0.8rem; font-weight:700; text-transform:uppercase; color:var(--text-dim); letter-spacing:0.5px;">
+                  Comprehensive Security Checks
+                </div>
+                <div class="checks-grid" id="checks-container">
+                  <!-- Dynamically populated checks -->
+                </div>
+              </div>
+
+              <!-- Warnings & Findings -->
+              <div class="indicators-wrap" style="margin-top:1.5rem;">
+                <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; color:var(--text-dim);">
+                  Observed Technical Findings & Evidence
+                </div>
+                <div id="findings-container" style="margin-top:0.5rem; display:flex; flex-direction:column; gap:0.4rem;">
+                  <!-- Dynamically populated findings -->
+                </div>
+              </div>
+
+              <!-- Safety Recommendations -->
+              <div class="safety-checklist" style="margin-top:1.5rem;">
+                <div class="safety-checklist-title">🛡️ Recommended User Actions</div>
+                <div id="recommendations-container">
+                  <!-- Dynamically populated recommendations -->
+                </div>
+              </div>
+
+              <!-- Academic Disclaimer Notice -->
+              <div class="disclaimer-card" id="disclaimer-notice">
+                ⚠️ <strong>Security Disclaimer:</strong> Automated checks analyze technical indicators, DNS resolution, certificate parameters, and redirects. They cannot guarantee that a website is safe. Attackers frequently acquire valid SSL certificates or register new domains. Never enter credentials on unsolicited links.
+              </div>
+
+              <!-- Action Buttons -->
+              <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem;">
+                <button type="button" class="btn btn-primary btn-sm" id="btn-scan-another">
+                  🔄 Scan Another URL
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+  <script src="config.js?v=3.1"></script>
+  <script src="main.js?v=3.1"></script>
+  <script src="urlscan.js?v=3.1"></script>
+</body>
+</html>

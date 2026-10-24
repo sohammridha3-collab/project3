@@ -264,6 +264,10 @@ class ScanRecordResponse(BaseModel):
     translated_transcript: Optional[str] = None
     duration_seconds: Optional[float] = None
 
+    # URL Scanner specific fields
+    url: Optional[str] = None
+    normalized_url: Optional[str] = None
+
     @field_serializer("created_at")
     def serialize_datetime(self, dt: datetime, _info) -> str:
         return serialize_utc_datetime(dt) or ""
@@ -349,3 +353,50 @@ class CallScanResponse(BaseModel):
         return serialize_utc_datetime(dt)
 
 
+# =============================================================================
+# URL & WEBSITE SCANNER SCHEMAS
+# =============================================================================
+
+class UrlScanRequest(BaseModel):
+    url: str = Field(
+        ...,
+        min_length=1,
+        max_length=2048,
+        description="Target website URL to inspect (supports http:// and https://).",
+        examples=["https://example.com"]
+    )
+
+
+class UrlSecurityCheck(BaseModel):
+    name: str = Field(..., description="Name of the security check.")
+    category: str = Field(..., description="Category (Structure, Domain, Encryption, Network, Heuristics, Threat Intelligence).")
+    status: str = Field(..., description="Result status: pass, warning, fail, unavailable, info.")
+    description: str = Field(..., description="Brief explanation of the check.")
+    details: Optional[str] = Field(default=None, description="Observed evidence or diagnostic details.")
+
+
+class UrlScanResponse(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
+    url: str = Field(..., description="Submitted raw URL.")
+    normalized_url: str = Field(..., description="Safely normalized and parsed URL.")
+    classification: str = Field(..., description="Risk verdict: Low Risk, Suspicious, High Risk, or Unknown.")
+    risk_score: float = Field(..., description="Deterministic threat risk score between 0.0 and 100.0.")
+    checks: List[UrlSecurityCheck] = Field(default_factory=list, description="Granular security check results.")
+    findings: List[str] = Field(default_factory=list, description="Evidence supporting detected security warnings.")
+    recommendations: List[str] = Field(default_factory=list, description="Recommended user defense actions.")
+    scan_timestamp: datetime = Field(..., description="Timestamp when analysis was performed.")
+    scan_id: Optional[int] = Field(default=None, description="Database record ID if scan was persisted.")
+    domain_info: Optional[Dict[str, Any]] = Field(default=None, description="Domain and public suffix metadata.")
+    https_info: Optional[Dict[str, Any]] = Field(default=None, description="TLS certificate and HTTPS metadata.")
+    redirect_info: Optional[Dict[str, Any]] = Field(default=None, description="Redirect trace and final landing page.")
+    threat_intel_info: Optional[Dict[str, Any]] = Field(default=None, description="Threat reputation provider status.")
+    resolved_ip: Optional[str] = Field(default=None, description="Resolved public IP address.")
+    disclaimer: str = Field(
+        default="Automated security checks evaluate observed technical indicators and heuristics. They cannot guarantee that a website is free from fraud, social engineering, or emerging threats.",
+        description="Responsible disclosure disclaimer."
+    )
+
+    @field_serializer("scan_timestamp")
+    def serialize_datetime(self, dt: datetime, _info) -> str:
+        return serialize_utc_datetime(dt) or ""

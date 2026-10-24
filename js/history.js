@@ -86,6 +86,9 @@
         } else if (activeRecordType === "call") {
           emptyTitle.textContent = "No CallScam Audio Analyses Recorded";
           emptyDesc.textContent = "You have not evaluated any audio call recordings yet. Upload or record a call to screen for voice phishing.";
+        } else if (activeRecordType === "url") {
+          emptyTitle.textContent = "No URL Scans Recorded";
+          emptyDesc.textContent = "You have not scanned any website URLs yet. Use the URL Scanner to screen websites for phishing threats.";
         } else if (activeRecordType === "message") {
           emptyTitle.textContent = "No Message Analyses Recorded";
           emptyDesc.textContent = "No message screenings found for this filter criteria.";
@@ -108,21 +111,30 @@
         const relTime = formatRelativeTime(r.created_at);
 
         const isCall = r.record_type === "call" || r.message_type === "call";
+        const isUrl = r.record_type === "url" || r.message_type === "url";
         const isScam = r.is_scam;
 
         // Content preview
-        const rawContent = r.transcript || r.message_text || "";
+        const rawContent = r.url || r.transcript || r.message_text || "";
         const preview = rawContent.length > 70
           ? rawContent.substring(0, 67) + "..."
           : rawContent;
 
         const secondaryInfo = isCall
           ? (r.audio_filename ? `🎧 ${r.audio_filename}` : "🎙️ Voice Recording")
+          : isUrl
+          ? (r.subject ? `${r.subject}` : "🌐 Website Scan")
           : (r.subject ? `Subj: ${r.subject.substring(0, 32)}` : "");
 
         const languageLabel = isCall
           ? (r.language_name || (r.detected_language ? r.detected_language.toUpperCase() : "English"))
-          : "—";
+          : (isUrl ? "Web Domain" : "—");
+
+        const badgeHtml = isCall
+          ? `<span style="font-size:0.75rem; padding:2px 8px; border-radius:6px; font-weight:600; display:inline-flex; align-items:center; gap:4px; background:rgba(139,92,246,0.15); color:#C4B5FD; border:1px solid rgba(139,92,246,0.3);">🎙️ Call</span>`
+          : isUrl
+          ? `<span style="font-size:0.75rem; padding:2px 8px; border-radius:6px; font-weight:600; display:inline-flex; align-items:center; gap:4px; background:rgba(6,182,212,0.15); color:#67E8F9; border:1px solid rgba(6,182,212,0.3);">🌐 URL</span>`
+          : `<span style="font-size:0.75rem; padding:2px 8px; border-radius:6px; font-weight:600; display:inline-flex; align-items:center; gap:4px; background:rgba(59,130,246,0.15); color:#93C5FD; border:1px solid rgba(59,130,246,0.3);">${r.message_type === "email" ? "✉️ Email" : "📱 SMS"}</span>`;
 
         tr.innerHTML = `
           <td style="font-family:var(--font-mono); font-weight:700; color:var(--cyan); white-space:nowrap;">
@@ -133,9 +145,7 @@
             ${relTime ? `<div style="font-size:0.75rem; color:var(--text-dim); margin-top:2px;">${relTime}</div>` : ""}
           </td>
           <td>
-            <span style="font-size:0.75rem; padding:2px 8px; border-radius:6px; font-weight:600; display:inline-flex; align-items:center; gap:4px; ${isCall ? "background:rgba(139,92,246,0.15); color:#C4B5FD; border:1px solid rgba(139,92,246,0.3);" : "background:rgba(59,130,246,0.15); color:#93C5FD; border:1px solid rgba(59,130,246,0.3);"}">
-              ${isCall ? "🎙️ Call" : (r.message_type === "email" ? "✉️ Email" : "📱 SMS")}
-            </span>
+            ${badgeHtml}
           </td>
           <td style="max-width:280px; font-weight:500;">
             <div class="hist-preview-text" style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;"></div>
@@ -155,7 +165,7 @@
           <td style="white-space:nowrap;">
             <div style="display:flex; gap:0.4rem;">
               <button type="button" class="btn btn-ghost btn-sm btn-view-record" title="View Full Analysis Details">🔍</button>
-              <button type="button" class="btn btn-ghost btn-sm btn-dl-pdf" title="Download Official PDF Report">📄</button>
+              ${isUrl ? "" : `<button type="button" class="btn btn-ghost btn-sm btn-dl-pdf" title="Download Official PDF Report">📄</button>`}
               <button type="button" class="btn btn-danger btn-sm btn-del-record" title="Delete Record">🗑️</button>
             </div>
           </td>
@@ -169,39 +179,42 @@
           openRecordModal(r);
         });
 
-        // Download PDF Report
+        // Download PDF Report (if available)
         const dlBtn = tr.querySelector(".btn-dl-pdf");
-        dlBtn.addEventListener("click", async () => {
-          dlBtn.disabled = true;
-          try {
-            const endpoint = isCall
-              ? cfg.ENDPOINTS.downloadCallReportById(r.id)
-              : cfg.ENDPOINTS.downloadReportById(r.id);
+        if (dlBtn) {
+          dlBtn.addEventListener("click", async () => {
+            dlBtn.disabled = true;
+            try {
+              const endpoint = isCall
+                ? cfg.ENDPOINTS.downloadCallReportById(r.id)
+                : cfg.ENDPOINTS.downloadReportById(r.id);
 
-            const blob = await apiFetch(endpoint);
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = downloadUrl;
-            a.download = `ScamShield_${isCall ? "CallAudit" : "Report"}_${r.id}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(downloadUrl);
-            toast(`Downloaded PDF report for #${r.id}`, "success");
-          } catch (err) {
-            toast(`Download failed: ${err.message}`, "error");
-          } finally {
-            dlBtn.disabled = false;
-          }
-        });
+              const blob = await apiFetch(endpoint);
+              const downloadUrl = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = downloadUrl;
+              a.download = `ScamShield_${isCall ? "CallAudit" : "Report"}_${r.id}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              window.URL.revokeObjectURL(downloadUrl);
+              toast(`Downloaded PDF report for #${r.id}`, "success");
+            } catch (err) {
+              toast(`Download failed: ${err.message}`, "error");
+            } finally {
+              dlBtn.disabled = false;
+            }
+          });
+        }
 
         // Delete Record
         tr.querySelector(".btn-del-record").addEventListener("click", async () => {
-          const typeName = isCall ? "CallScam audio record" : "message scan";
+          const typeName = isCall ? "CallScam audio record" : (isUrl ? "URL scan" : "message scan");
           if (!confirm(`Are you sure you want to permanently delete ${typeName} #${r.id}?`)) return;
 
           try {
-            const delEndpoint = `${cfg.ENDPOINTS.deleteScan(r.id)}?record_type=${isCall ? "call" : "message"}`;
+            const recTypeParam = isCall ? "call" : (isUrl ? "url" : "message");
+            const delEndpoint = `${cfg.ENDPOINTS.deleteScan(r.id)}?record_type=${recTypeParam}`;
             await apiFetch(delEndpoint, { method: "DELETE" });
             toast(`Record #${r.id} deleted successfully.`, "info");
             loadHistory();
@@ -222,14 +235,17 @@
   function openRecordModal(r) {
     activeRecordInModal = r;
     const isCall = r.record_type === "call" || r.message_type === "call";
+    const isUrl = r.record_type === "url" || r.message_type === "url";
     const dateStr = formatDateTime(r.created_at);
 
-    modalIcon.textContent = isCall ? "🎙️" : "📩";
-    modalTitle.textContent = isCall ? "CallScam Voice Threat Assessment" : "Message Threat Screening";
+    modalIcon.textContent = isCall ? "🎙️" : (isUrl ? "🌐" : "📩");
+    modalTitle.textContent = isCall ? "CallScam Voice Threat Assessment" : (isUrl ? "URL & Website Security Assessment" : "Message Threat Screening");
     modalSubtitle.textContent = `Audit Record #${r.id} • ${dateStr}`;
 
     const indicators = r.indicators_detected || [];
-    const textContent = r.transcript || r.message_text || "No content preserved.";
+    const textContent = r.url || r.transcript || r.message_text || "No content preserved.";
+
+    modalBtnDownloadPdf.style.display = isUrl ? "none" : "inline-flex";
 
     modalBody.innerHTML = `
       <!-- Verdict Banner -->
@@ -245,28 +261,28 @@
       <div class="metrics-2col" style="margin-bottom:1.25rem;">
         <div class="metric-tile">
           <div class="k">Record Category</div>
-          <div class="v" style="font-size:1rem;">${isCall ? "🎙️ Audio Recording" : `📩 Message (${r.message_type || "auto"})`}</div>
+          <div class="v" style="font-size:1rem;">${isCall ? "🎙️ Audio Recording" : (isUrl ? "🌐 Website URL" : `📩 Message (${r.message_type || "auto"})`)}</div>
         </div>
         <div class="metric-tile">
-          <div class="k">${isCall ? "Detected Spoken Language" : "Decision Boundary Margin"}</div>
-          <div class="v" style="font-size:1rem;">${isCall ? (r.language_name || r.detected_language || "English") : (r.decision_margin !== null && r.decision_margin !== undefined ? Number(r.decision_margin).toFixed(3) : "N/A")}</div>
+          <div class="k">${isCall ? "Detected Spoken Language" : (isUrl ? "Domain / Host" : "Decision Boundary Margin")}</div>
+          <div class="v" style="font-size:1rem;">${isCall ? (r.language_name || r.detected_language || "English") : (isUrl ? (r.subject || "Web Link") : (r.decision_margin !== null && r.decision_margin !== undefined ? Number(r.decision_margin).toFixed(3) : "N/A"))}</div>
         </div>
         <div class="metric-tile">
           <div class="k">Risk Rating</div>
           <div class="v" style="font-size:1rem; color:${r.is_scam ? "#F87171" : "#34D399"};">${r.risk_level ? r.risk_level.replaceAll("_", " ") : (r.is_scam ? "HIGH RISK" : "SAFE")}</div>
         </div>
         <div class="metric-tile">
-          <div class="k">${isCall ? "Call Duration" : "Subject"}</div>
-          <div class="v" style="font-size:1rem;">${isCall ? (r.duration_seconds ? `${r.duration_seconds.toFixed(1)}s` : "Recorded Audio") : (r.subject ? r.subject.substring(0, 25) : "—")}</div>
+          <div class="k">${isCall ? "Call Duration" : (isUrl ? "Protocol" : "Subject")}</div>
+          <div class="v" style="font-size:1rem;">${isCall ? (r.duration_seconds ? `${r.duration_seconds.toFixed(1)}s` : "Recorded Audio") : (isUrl ? (r.message_text.startsWith("https") ? "HTTPS" : "HTTP") : (r.subject ? r.subject.substring(0, 25) : "—"))}</div>
         </div>
       </div>
 
       <!-- Preserved Content / Transcript -->
       <div style="margin-bottom:1.25rem;">
         <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; color:var(--text-dim); margin-bottom:0.5rem;">
-          ${isCall ? "🎧 Transcribed Speech" : "📄 Screened Message Text"}
+          ${isCall ? "🎧 Transcribed Speech" : (isUrl ? "🌐 Scanned Target URL" : "📄 Screened Message Text")}
         </div>
-        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--navy-border); border-radius:8px; padding:1rem; font-size:0.9rem; line-height:1.6; max-height:220px; overflow-y:auto; white-space:pre-wrap;" id="modal-full-text">
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--navy-border); border-radius:8px; padding:1rem; font-size:0.9rem; line-height:1.6; max-height:220px; overflow-y:auto; word-break:break-all; white-space:pre-wrap;" id="modal-full-text">
         </div>
       </div>
 
