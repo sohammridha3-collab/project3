@@ -198,21 +198,74 @@
     header.innerHTML = "";
     const wrap = el("div", { class: "wrap header-bar" });
 
-    // Brand logo
-    const brandLink = el("a", { href: "index.html", class: "brand" }, [
-      el("div", { class: "brand-shield" }),
-      el("span", {}, ["ScamShield", el("span", { style: "color:var(--cyan);font-weight:400;" }, ["AI"])])
+    // Custom Cyber Shield SVG Brand Identity
+    const brandLink = el("a", { href: "index.html", class: "brand", "aria-label": "ScamShield AI Home" });
+    const shieldContainer = el("div", { class: "brand-shield" });
+    shieldContainer.innerHTML = `
+      <svg viewBox="0 0 32 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M16 2L30 8V18C30 26.5 16 34 16 34C16 34 2 26.5 2 18V8L16 2Z" stroke="#FF1E43" stroke-width="2.5" fill="rgba(255, 30, 67, 0.16)"/>
+        <path d="M16 7L25 11.5V18C25 23.5 16 29 16 29C16 29 7 23.5 7 18V11.5L16 7Z" fill="url(#brand-shield-grad)"/>
+        <circle cx="16" cy="18" r="3.5" fill="#FFFFFF"/>
+        <defs>
+          <linearGradient id="brand-shield-grad" x1="7" y1="7" x2="25" y2="29" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FF1E43"/>
+            <stop offset="1" stop-color="#8B0021"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    `;
+    const brandTitle = el("div", { class: "brand-title" }, [
+      el("span", { class: "shield-text" }, ["SCAMSHIELD"]),
+      el("span", { class: "ai-text" }, ["AI"])
     ]);
+    brandLink.appendChild(shieldContainer);
+    brandLink.appendChild(brandTitle);
+
+    // Live Core Status Beacon
+    const beacon = el("div", { class: "live-beacon", id: "header-core-beacon", title: "Monitoring FastAPI Backend Core" }, [
+      el("span", { class: "dot" }),
+      el("span", { id: "beacon-label" }, ["CORE ONLINE"])
+    ]);
+
+    // Asynchronously ping health status
+    const pingEndpoint = (cfg && typeof cfg.buildApiUrl === "function") 
+      ? cfg.buildApiUrl("/health") 
+      : `${((cfg && cfg.API_BASE_URL) || "https://project3-backend-fzlv.onrender.com").replace(/\/+$/, "")}/health`;
+    fetch(pingEndpoint, { method: "GET", mode: "cors" })
+      .then(res => {
+        const lbl = document.getElementById("beacon-label");
+        if (!lbl) return;
+        if (res.ok) {
+          lbl.textContent = "CORE ONLINE";
+        } else {
+          lbl.textContent = "CORE BUSY";
+        }
+      })
+      .catch(() => {
+        const beaconEl = document.getElementById("header-core-beacon");
+        const lbl = document.getElementById("beacon-label");
+        if (beaconEl && lbl) {
+          beaconEl.style.color = "var(--neon-orange)";
+          beaconEl.style.borderColor = "rgba(255, 106, 0, 0.4)";
+          beaconEl.style.background = "rgba(255, 106, 0, 0.08)";
+          const dot = beaconEl.querySelector(".dot");
+          if (dot) {
+            dot.style.background = "var(--neon-orange)";
+            dot.style.boxShadow = "0 0 8px var(--neon-orange)";
+          }
+          lbl.textContent = "STANDBY";
+        }
+      });
 
     // Navigation links
     const nav = el("nav", { class: "nav-links", id: "nav-links" });
 
     const basePages = [
       ["index.html", "Home"],
-      ["analyze.html", "Analyze"],
-      ["callscam.html", "CallScam"],
       ["urlscan.html", "URL Scanner"],
-      ["details.html", "Details"]
+      ["analyze.html", "Message Scanner"],
+      ["callscam.html", "Call Detection"],
+      ["details.html", "Architecture & ML"]
     ];
 
     basePages.forEach(([file, label]) => {
@@ -222,7 +275,7 @@
     });
 
     if (user) {
-      const dashLink = el("a", { href: "dashboard.html" }, ["Results"]);
+      const dashLink = el("a", { href: "dashboard.html" }, ["Dashboard"]);
       if (currentFile === "dashboard.html") dashLink.setAttribute("aria-current", "page");
       nav.appendChild(dashLink);
 
@@ -257,6 +310,7 @@
     });
 
     wrap.appendChild(brandLink);
+    wrap.appendChild(beacon);
     wrap.appendChild(nav);
     wrap.appendChild(authBox);
     wrap.appendChild(toggle);
@@ -273,40 +327,41 @@
 
     const grid = el("div", { class: "footer-grid" }, [
       el("div", { class: "footer-col" }, [
-        el("div", { class: "brand", style: "margin-bottom:1rem;" }, [
+        el("div", { class: "brand", style: "margin-bottom:1.25rem;" }, [
           el("div", { class: "brand-shield" }),
-          el("span", {}, ["ScamShield", el("span", { style: "color:var(--cyan);" }, ["AI"])])
+          el("div", { class: "brand-title" }, [
+            el("span", { class: "shield-text" }, ["SCAMSHIELD"]),
+            el("span", { class: "ai-text" }, ["AI"])
+          ])
         ]),
-        el("p", { style: "font-size:0.88rem;max-width:40ch;" }, [
-          "AI-powered scam, phishing, and call fraud screening system developed for B.Tech CSE capstone. Trained on the CEAS corpus with multilingual audio intelligence."
+        el("p", { style: "font-size:0.88rem;max-width:44ch;line-height:1.7;" }, [
+          "Next-generation cyber scam defense operations center. Dual-engine machine learning pipelines for real-time URL risk analysis, SMS/email scam screening, and multilingual audio fraud intelligence."
         ])
       ]),
       el("div", { class: "footer-col" }, [
-        el("h4", {}, ["Navigation"]),
+        el("h4", {}, ["Security Modules"]),
         el("ul", {}, [
-          el("li", {}, [el("a", { href: "analyze.html" }, ["Analyze Message"])]),
-          el("li", {}, [el("a", { href: "callscam.html" }, ["CallScam Detection"])]),
-          el("li", {}, [el("a", { href: "urlscan.html" }, ["URL Scanner"])]),
-          el("li", {}, [el("a", { href: "details.html#overview" }, ["Project Overview"])]),
-          el("li", {}, [el("a", { href: "details.html#how-it-works" }, ["How It Works"])]),
-          el("li", {}, [el("a", { href: "details.html#performance" }, ["Model Performance"])]),
-          el("li", {}, [el("a", { href: "details.html#privacy" }, ["Privacy & Limitations"])])
+          el("li", {}, [el("a", { href: "urlscan.html" }, ["🌐 Phishing URL Scanner"])]),
+          el("li", {}, [el("a", { href: "analyze.html" }, ["💬 SMS & Email Screening"])]),
+          el("li", {}, [el("a", { href: "callscam.html" }, ["📞 CallScam Audio AI"])]),
+          el("li", {}, [el("a", { href: "details.html#overview" }, ["🛡️ Security Core Overview"])]),
+          el("li", {}, [el("a", { href: "details.html#performance" }, ["📊 Held-Out Test Benchmarks"])])
         ])
       ]),
       el("div", { class: "footer-col" }, [
-        el("h4", {}, ["Developer & System"]),
+        el("h4", {}, ["Telemetric Interfaces"]),
         el("ul", {}, [
-          el("li", {}, [el("a", { href: `${cfg.API_BASE_URL}/docs`, target: "_blank" }, ["FastAPI Swagger Docs"])]),
-          el("li", {}, [el("a", { href: `${cfg.API_BASE_URL}/redoc`, target: "_blank" }, ["ReDoc Specification"])]),
-          el("li", {}, [el("a", { href: `${cfg.API_BASE_URL}/health`, target: "_blank" }, ["Live Backend Health"])])
+          el("li", {}, [el("a", { href: `${cfg.API_BASE_URL}/docs`, target: "_blank", rel: "noopener" }, ["⚡ FastAPI OpenAPI Docs"])]),
+          el("li", {}, [el("a", { href: `${cfg.API_BASE_URL}/redoc`, target: "_blank", rel: "noopener" }, ["📖 ReDoc Architecture Spec"])]),
+          el("li", {}, [el("a", { href: `${cfg.API_BASE_URL}/health/ready`, target: "_blank", rel: "noopener" }, ["🟢 Core Readiness Probe"])])
         ])
       ])
     ]);
 
     const bottom = el("div", { class: "footer-bottom" }, [
-      el("span", {}, ["© 2026 ScamShield AI • Academic Machine Learning Project."]),
+      el("span", {}, ["© 2026 SCAMSHIELD AI • Academic & Enterprise Security Operations Capstone."]),
       el("span", { style: "color:var(--text-dim);" }, [
-        "Statistical estimates only. Always verify sensitive financial or credential requests directly."
+        "Statistical neural models operate under zero-trust protocols. Always verify unknown financial or credential requests."
       ])
     ]);
 

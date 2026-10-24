@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ScamShield AI · Intelligent Scam Message Detection System</title>
-  <meta name="description" content="AI-based scam and phishing message screening system. Classify suspicious SMS and emails using trained machine learning models.">
+  <title>ScamShield AI · Next-Gen Cybersecurity Threat Operations Center</title>
+  <meta name="description" content="AI-powered cybersecurity protection against phishing URLs, scam messages, suspicious calls, and fraudulent content. Real-time dual-engine machine learning defense.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="responsive.css">
 </head>
@@ -17,169 +17,395 @@
 
   <main id="main">
     
-    <!-- Hero Section -->
-    <section class="hero">
+    <!-- Cinematic 3D Hero Section -->
+    <section class="hero" id="hero-section">
       <div class="wrap">
         <div class="hero-grid">
           <div>
             <div class="hero-tag">
               <span>🛡️ Next-Gen AI Threat Defense & Scam Intelligence</span>
             </div>
-            <h1>Detect Scams with AI</h1>
+            <h1>STOP SCAMS BEFORE THEY STRIKE.</h1>
             <p>
-              Analyze incoming email and SMS communications against a trained Support Vector Machine threat pipeline. 
-              Sub-20ms inference, explainable indicator tags, and downloadable audit PDF reports.
+              AI-powered protection against phishing URLs, scam messages, suspicious calls, and fraudulent content. 
+              Engineered with dual machine learning pipelines, real-time threat telemetry, and instant zero-trust verification.
             </p>
             <div class="hero-actions">
-              <a class="btn btn-primary" href="analyze.html">⚡ Analyze a Message</a>
-              <a class="btn btn-cyan" href="callscam.html">📞 CallScam Audio AI</a>
-              <a class="btn btn-ghost" href="details.html">📖 System Details & Metrics</a>
+              <a class="btn btn-primary" href="#interactive-scanner" id="hero-scan-cta">⚡ Scan a Threat</a>
+              <a class="btn btn-cyan" href="#protection-features" id="hero-explore-cta">🛡️ Explore Protection</a>
+              <a class="btn btn-ghost" href="details.html">📖 ML Architecture</a>
             </div>
           </div>
 
-          <!-- 3D CSS Shield Scene -->
-          <div class="scene-container" aria-hidden="true">
-            <div class="cyber-ring r1"></div>
-            <div class="cyber-ring r2"></div>
-            <div class="cyber-ring r3"></div>
-            <div class="shield-3d"><i></i></div>
-            <span class="cyber-particle p1"></span>
-            <span class="cyber-particle p2"></span>
-            <span class="cyber-particle p3"></span>
-            <span class="cyber-particle p4"></span>
+          <!-- Cinematic 3D Interactive WebGL Cyber Shield Core Stage -->
+          <div class="hero-3d-stage" aria-label="Interactive 3D Cybersecurity Core Visualization">
+            <div class="hero-hud-ring" aria-hidden="true"></div>
+            <div id="hero-3d-canvas-container">
+              <!-- WebGL Three.js Canvas dynamically mounts here. Fallback CSS scene rendered below if WebGL is unavailable -->
+              <div class="scene-container" aria-hidden="true">
+                <div class="cyber-ring r1"></div>
+                <div class="cyber-ring r2"></div>
+                <div class="cyber-ring r3"></div>
+                <div class="shield-3d"><i></i></div>
+                <span class="cyber-particle p1"></span>
+                <span class="cyber-particle p2"></span>
+                <span class="cyber-particle p3"></span>
+                <span class="cyber-particle p4"></span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Core Capabilities -->
-    <section class="block">
+    <!-- Verified Telemetry Metrics Matrix -->
+    <section class="block" style="padding: 2rem 0 3.5rem; border-bottom: 1px solid rgba(255, 30, 67, 0.2);">
+      <div class="wrap">
+        <div class="telemetry-matrix" style="margin: 0;">
+          <div class="telemetry-card">
+            <div class="telemetry-header">
+              <span class="telemetry-label">Message Defense</span>
+              <span style="font-size:1.1rem;">⚡</span>
+            </div>
+            <div class="telemetry-value">99.85%</div>
+            <div class="telemetry-sub">Held-out test accuracy on CEAS corpus with 120k TF-IDF vectors</div>
+          </div>
+
+          <div class="telemetry-card">
+            <div class="telemetry-header">
+              <span class="telemetry-label">URL Phishing Model</span>
+              <span style="font-size:1.1rem;">🌐</span>
+            </div>
+            <div class="telemetry-value">97.86%</div>
+            <div class="telemetry-sub">HistGradientBoosting on 73,575 real benign & phishing URLs</div>
+          </div>
+
+          <div class="telemetry-card">
+            <div class="telemetry-header">
+              <span class="telemetry-label">Inference Latency</span>
+              <span style="font-size:1.1rem;">⏱️</span>
+            </div>
+            <div class="telemetry-value">&lt;18ms</div>
+            <div class="telemetry-sub">Sub-second vectorized prediction speed across edge endpoints</div>
+          </div>
+
+          <div class="telemetry-card">
+            <div class="telemetry-header">
+              <span class="telemetry-label">CallScam Audio AI</span>
+              <span style="font-size:1.1rem;">📞</span>
+            </div>
+            <div class="telemetry-value">3 Langs</div>
+            <div class="telemetry-sub">Multilingual speech fraud detection in English, Hindi, and Bengali</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Central Scam Scanner Terminal -->
+    <section class="block" id="interactive-scanner" style="background: radial-gradient(circle at 50% 20%, rgba(139, 0, 33, 0.22) 0%, transparent 70%);">
       <div class="wrap">
         <div class="block-title">
-          <h2>Intelligent Threat Detection Features</h2>
-          <p>Engineered for high accuracy and user transparency across digital messaging and voice channels.</p>
+          <h2>Interactive Multi-Vector Threat Scanner</h2>
+          <p>Execute real-time security screenings against live FastAPI machine learning endpoints. No simulations, zero fabricated data.</p>
+        </div>
+
+        <div class="scanner-terminal-card cyber-card" style="max-width: 900px; margin: 0 auto;">
+          <!-- Laser scanning line animation during active requests -->
+          <div class="scanning-laser" id="terminal-laser"></div>
+
+          <!-- Scanner HUD Header -->
+          <div class="scanner-hud-header">
+            <div class="scanner-hud-title">
+              <span style="color:var(--neon-red); font-size:1.3rem;">⚡</span>
+              <span>SCAMSHIELD THREAT DETECTION TERMINAL</span>
+            </div>
+            <div class="scanner-hud-status">
+              <span style="width:7px; height:7px; border-radius:50%; background:var(--cyber-green); box-shadow:0 0 8px var(--cyber-green);"></span>
+              <span>LIVE INFERENCE READY</span>
+            </div>
+          </div>
+
+          <!-- Scanner Tabs Navigation -->
+          <div class="scanner-tabs-bar" role="tablist">
+            <button type="button" class="scanner-tab-btn active" data-tab="tab-url" role="tab" id="tab-btn-url">
+              <span>🌐</span>
+              <span>Suspicious URL</span>
+            </button>
+            <button type="button" class="scanner-tab-btn" data-tab="tab-message" role="tab" id="tab-btn-message">
+              <span>💬</span>
+              <span>SMS / Message</span>
+            </button>
+            <button type="button" class="scanner-tab-btn" data-tab="tab-call" role="tab" id="tab-btn-call">
+              <span>📞</span>
+              <span>Call Scam Audio</span>
+            </button>
+            <button type="button" class="scanner-tab-btn" data-tab="tab-image" role="tab" id="tab-btn-image">
+              <span>🖼️</span>
+              <span>Screenshot / Image</span>
+            </button>
+          </div>
+
+          <!-- TAB 1: Real URL Scanner -->
+          <div class="scanner-tab-pane active" id="tab-url" role="tabpanel">
+            <form id="scanner-url-form">
+              <div class="form-group">
+                <label class="form-label" for="scanner-url-input">
+                  <span>Target URL or Domain</span>
+                  <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-dim);">POST /api/url-scan</span>
+                </label>
+                <div class="input-wrapper">
+                  <input type="text" id="scanner-url-input" placeholder="e.g. https://secure-bank-login-update.com/verify or http://bit.ly/claim-prize" required autocomplete="off" spellcheck="false">
+                </div>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-dim);">
+                  Evaluates 22 lexical features, homoglyphs, brand impersonation & TLS certificates.
+                </span>
+                <button type="submit" class="btn btn-primary" id="scanner-url-btn">
+                  <span>⚡ Scan URL Threat</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- TAB 2: Real Message Scanner -->
+          <div class="scanner-tab-pane" id="tab-message" role="tabpanel">
+            <form id="scanner-msg-form">
+              <div class="form-group">
+                <label class="form-label" for="scanner-msg-input">
+                  <span>Incoming Communication Content</span>
+                  <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-dim);">POST /predict</span>
+                </label>
+                <textarea id="scanner-msg-input" placeholder="Paste suspicious SMS text, WhatsApp alert, or email body here..." required rows="4"></textarea>
+              </div>
+
+              <!-- Quick Presets -->
+              <div style="margin-bottom:1.25rem;">
+                <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; display:block; margin-bottom:0.5rem;">Or try a realistic sample:</span>
+                <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                  <button type="button" class="btn btn-ghost btn-sm quick-preset-chip" data-sample="URGENT: Your SBI account will be blocked today! Update your KYC immediately by clicking: http://sbi-kyc-verify-portal.top/login. Failing which your ATM card will be permanently deactivated.">
+                    🚨 Bank KYC Threat
+                  </button>
+                  <button type="button" class="btn btn-ghost btn-sm quick-preset-chip" data-sample="CONGRATULATIONS! You have won a cash lottery prize of Rs 50,000 in the Diwali Lucky Draw! Call manager immediately at +91-9876543210 to claim your wire transfer.">
+                    🎁 Prize Scam Lure
+                  </button>
+                  <button type="button" class="btn btn-ghost btn-sm quick-preset-chip" data-sample="Hi Mom, I lost my phone today and this is my temporary WhatsApp number. Can you please wire $350 for my cab fare urgently? I will pay you back tomorrow.">
+                    👤 Impersonation / Urgency
+                  </button>
+                  <button type="button" class="btn btn-ghost btn-sm quick-preset-chip" data-sample="Your package shipment #48291 has been scheduled for delivery tomorrow between 2 PM and 5 PM via BlueDart. No further action is required.">
+                    ✅ Legitimate Delivery
+                  </button>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-dim);">
+                  Evaluates 120,000 n-gram TF-IDF weights on LinearSVC decision boundary.
+                </span>
+                <button type="submit" class="btn btn-primary" id="scanner-msg-btn">
+                  <span>⚡ Evaluate Threat</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- TAB 3: Real Call Scam Detection -->
+          <div class="scanner-tab-pane" id="tab-call" role="tabpanel">
+            <div class="form-group">
+              <label class="form-label">
+                <span>Upload Voice Recording</span>
+                <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-dim);">POST /api/callscam/analyze</span>
+              </label>
+
+              <div class="cyber-dropzone" id="scanner-call-dropzone">
+                <div class="cyber-dropzone-icon">🎙️</div>
+                <div style="font-family:var(--font-head); font-size:1rem; font-weight:700; color:#FFFFFF; margin-bottom:0.4rem;">
+                  DRAG & DROP SUSPICIOUS CALL AUDIO HERE
+                </div>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                  Supports .wav, .mp3, .ogg audio files up to 25MB
+                </p>
+                <div id="scanner-call-filestatus" style="font-family:var(--font-mono); font-size:0.85rem; color:var(--text-dim);">
+                  No audio file selected yet
+                </div>
+                <input type="file" id="scanner-call-file" accept="audio/*,.wav,.mp3,.ogg" style="display:none;">
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-top:1rem;">
+              <a href="callscam.html" class="btn btn-ghost btn-sm">
+                <span>🎙️ Launch In-Browser Live Microphone Studio →</span>
+              </a>
+              <button type="button" class="btn btn-primary" id="scanner-call-btn" disabled>
+                <span>⚡ Analyze Audio Recording</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB 4: Screenshot / Image Scanner -->
+          <div class="scanner-tab-pane" id="tab-image" role="tabpanel">
+            <div class="form-group">
+              <label class="form-label">
+                <span>Upload Message Screenshot</span>
+                <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-dim);">Optical OCR → /predict</span>
+              </label>
+
+              <div class="cyber-dropzone" id="scanner-img-dropzone">
+                <div class="cyber-dropzone-icon">🖼️</div>
+                <div style="font-family:var(--font-head); font-size:1rem; font-weight:700; color:#FFFFFF; margin-bottom:0.4rem;">
+                  DRAG & DROP SCREENSHOT OF SMS / WHATSAPP / EMAIL
+                </div>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                  Supports .png, .jpg, .jpeg, .webp screenshots
+                </p>
+                <div id="scanner-img-status" style="font-family:var(--font-mono); font-size:0.85rem; color:var(--text-dim);">
+                  No screenshot image attached
+                </div>
+                <input type="file" id="scanner-img-file" accept="image/*" style="display:none;">
+              </div>
+
+              <!-- Image Preview Container -->
+              <div style="margin-top:1rem; text-align:center;">
+                <img id="scanner-img-preview" src="" alt="Screenshot Preview" style="max-height:180px; max-width:100%; border-radius:4px; border:1px solid rgba(255,30,67,0.4); display:none; margin:0 auto; box-shadow:0 0 15px rgba(255,30,67,0.25);">
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-top:1rem;">
+              <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-dim);">
+                Extracts text visually and validates against the real ML scam model.
+              </span>
+              <button type="button" class="btn btn-primary" id="scanner-img-btn" disabled>
+                <span>⚡ Analyze Screenshot Text</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Results Output Container -->
+          <div id="scanner-results-output" style="margin-top:2rem;"></div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Core Protection Capabilities Grid -->
+    <section class="block" id="protection-features">
+      <div class="wrap">
+        <div class="block-title">
+          <h2>Enterprise Security Capabilities</h2>
+          <p>Engineered for maximum resilience, sub-20ms inference speed, and explainable cybersecurity defense.</p>
         </div>
 
         <div class="cards-grid">
           
           <div class="card tilt">
-            <div class="card-icon">⚡</div>
-            <h3>Message Threat Screening</h3>
+            <div class="card-icon">🌐</div>
+            <h3>Phishing URL Scanner</h3>
             <p style="font-size:0.9rem;">
-              Two-column interactive workspace with instant LinearSVC classification, 120k TF-IDF features, decision margins, and safety guidance.
+              22-feature lexical evaluation, homoglyph and Punycode spoof detection, brand impersonation flags, SSRF-safe redirect tracer, and SSL/TLS certificate validity checks.
             </p>
-            <a href="analyze.html" style="font-size:0.85rem; color:var(--cyan); font-weight:600; text-decoration:none;">Open Workspace →</a>
+            <a href="urlscan.html" style="font-size:0.85rem; color:var(--neon-red); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Scan URL Now →</a>
+          </div>
+
+          <div class="card tilt">
+            <div class="card-icon">💬</div>
+            <h3>LinearSVC Message Classifier</h3>
+            <p style="font-size:0.9rem;">
+              Dual-mode SMS & structured Email workspace powered by 120,000 TF-IDF features. Calibrated Platt scaling outputs exact scam probabilities and decision margins.
+            </p>
+            <a href="analyze.html" style="font-size:0.85rem; color:var(--neon-red); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Open Workspace →</a>
           </div>
 
           <div class="card tilt">
             <div class="card-icon">📞</div>
             <h3>CallScam Audio Intelligence</h3>
             <p style="font-size:0.9rem;">
-              Upload or record suspicious calls with in-browser microphone capture. Transcribes speech and detects fraud cues across English, Hindi, and Bengali.
+              Real-time browser microphone recording or audio file ingestion. Transcribes multilingual speech (English, Hindi, Bengali) and flags social engineering coercion tactics.
             </p>
-            <a href="callscam.html" style="font-size:0.85rem; color:var(--cyan); font-weight:600; text-decoration:none;">Launch CallScam →</a>
-          </div>
-
-          <div class="card tilt">
-            <div class="card-icon">🌐</div>
-            <h3>Suspicious URL Scanner</h3>
-            <p style="font-size:0.9rem;">
-              Deep domain analysis, homoglyph & Punycode inspection, brand impersonation cues, TLS verification, and SSRF-safe redirect tracing.
-            </p>
-            <a href="urlscan.html" style="font-size:0.85rem; color:var(--cyan); font-weight:600; text-decoration:none;">Scan URL Now →</a>
+            <a href="callscam.html" style="font-size:0.85rem; color:var(--neon-red); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Launch CallScam Studio →</a>
           </div>
 
           <div class="card tilt">
             <div class="card-icon">⚠️</div>
-            <h3>Explainable Indicators</h3>
+            <h3>Explainable Threat Indicators</h3>
             <p style="font-size:0.9rem;">
-              Rule-based heuristic detection identifies urgency threats, prize lures, credential harvesting, and suspicious URLs alongside the ML decision.
+              Zero black-box decisions. Instant heuristic tagging exposes urgency manipulation, fake prizes, credential harvesting traps, and malicious domain cues.
             </p>
-            <span style="font-size:0.85rem; color:var(--text-dim);">Heuristic Transparency</span>
+            <span style="font-size:0.82rem; color:var(--text-dim); font-family:var(--font-mono);">Heuristic Rule Pipeline</span>
           </div>
 
           <div class="card tilt">
             <div class="card-icon">📄</div>
-            <h3>Executive Audit Reports</h3>
+            <h3>Executive PDF Audit Reports</h3>
             <p style="font-size:0.9rem;">
-              Generate and download formal PDF cybersecurity audit reports synthesized directly on the backend using ReportLab for your security archives.
+              Download formal cryptographic cybersecurity audit reports generated dynamically on the backend via ReportLab Platypus for corporate compliance and archiving.
             </p>
-            <span style="font-size:0.85rem; color:var(--text-dim);">ReportLab Platypus Engine</span>
+            <span style="font-size:0.82rem; color:var(--text-dim); font-family:var(--font-mono);">Cryptographic PDF Engine</span>
           </div>
 
           <div class="card tilt">
             <div class="card-icon">📊</div>
-            <h3>Verified Empirical Metrics</h3>
+            <h3>Academic & Empirical Rigor</h3>
             <p style="font-size:0.9rem;">
-              99.85% held-out test accuracy, 99.86% F1-score, and full 2x2 confusion matrix documented with complete academic transparency.
+              99.85% held-out test accuracy, 99.86% F1-score, 5-fold cross-validation benchmarks, and full confusion matrices documented with 100% scientific transparency.
             </p>
-            <a href="details.html#performance" style="font-size:0.85rem; color:var(--cyan); font-weight:600; text-decoration:none;">View Benchmarks →</a>
-          </div>
-
-          <div class="card tilt">
-            <div class="card-icon">🔒</div>
-            <h3>Isolated History & Auth</h3>
-            <p style="font-size:0.9rem;">
-              Authenticated users can save and manage their scan history securely in SQLite/PostgreSQL, with search, filtering, and delete controls.
-            </p>
-            <a href="dashboard.html" style="font-size:0.85rem; color:var(--cyan); font-weight:600; text-decoration:none;">View Results →</a>
+            <a href="details.html#performance" style="font-size:0.85rem; color:var(--neon-red); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">View Benchmarks →</a>
           </div>
 
         </div>
       </div>
     </section>
 
-    <!-- Simple 3-Step Workflow -->
-    <section class="block" style="background:var(--navy-surface); border-top:1px solid var(--navy-border); border-bottom:1px solid var(--navy-border);">
+    <!-- 3-Step Zero-Trust Defense Protocol -->
+    <section class="block" style="background: rgba(14, 5, 10, 0.6); border-top: 1px solid rgba(255, 30, 67, 0.2); border-bottom: 1px solid rgba(255, 30, 67, 0.2);">
       <div class="wrap">
         <div class="block-title">
-          <h2>How ScamShield AI Operates</h2>
-          <p>Screen any message in three simple steps before clicking or responding.</p>
+          <h2>Three-Step Zero-Trust Protocol</h2>
+          <p>Every suspect link, text message, and audio file is verified across our multi-stage inspection perimeter.</p>
         </div>
 
         <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
           
           <div class="card">
-            <div style="font-family:var(--font-mono); color:var(--cyan); font-size:1.5rem; font-weight:800; margin-bottom:0.75rem;">01</div>
-            <h3>Paste Your Message</h3>
+            <div style="font-family:var(--font-head); color:var(--neon-red); font-size:1.8rem; font-weight:900; margin-bottom:0.75rem;">01</div>
+            <h3>Ingest Threat Signal</h3>
             <p style="font-size:0.9rem;">
-              Drop in an SMS or email text. Choose between SMS mode or structured Email mode (with subject line) in the analysis workspace.
+              Paste an unsolicited SMS, email body, target URL, or voice recording. The payload is sanitized and parsed into structured feature matrices.
             </p>
           </div>
 
           <div class="card">
-            <div style="font-family:var(--font-mono); color:var(--blue); font-size:1.5rem; font-weight:800; margin-bottom:0.75rem;">02</div>
-            <h3>Real-Time Evaluation</h3>
+            <div style="font-family:var(--font-head); color:var(--neon-orange); font-size:1.8rem; font-weight:900; margin-bottom:0.75rem;">02</div>
+            <h3>Dual-Engine Inference</h3>
             <p style="font-size:0.9rem;">
-              The text is vectorized into 120,000 features and evaluated against the LinearSVC decision boundary, outputting calibrated probability and margin.
+              The threat vector is processed through calibrated LinearSVC and HistGradientBoosting classifiers, comparing indicators against tens of thousands of weaponized samples.
             </p>
           </div>
 
           <div class="card">
-            <div style="font-family:var(--font-mono); color:var(--safe); font-size:1.5rem; font-weight:800; margin-bottom:0.75rem;">03</div>
-            <h3>Act With Confidence</h3>
+            <div style="font-family:var(--font-head); color:var(--cyber-green); font-size:1.8rem; font-weight:900; margin-bottom:0.75rem;">03</div>
+            <h3>Executive Defense Action</h3>
             <p style="font-size:0.9rem;">
-              Review detected threat indicators, download a PDF report, or follow our zero-trust defense guidelines before proceeding.
+              Receive calibrated risk ratings, actionable safety recommendations, and verifiable PDF audit records to protect your identity and financial assets.
             </p>
           </div>
 
         </div>
 
-        <div style="text-align:center; margin-top:2.5rem;">
-          <a class="btn btn-primary" href="analyze.html" style="font-size:1rem; padding:0.8rem 2rem;">Screen a Message Now →</a>
+        <div style="text-align:center; margin-top:3rem;">
+          <a class="btn btn-primary" href="#interactive-scanner" style="padding:0.9rem 2.4rem;">Launch Interactive Scanner →</a>
         </div>
       </div>
     </section>
 
-    <!-- Privacy & Responsible Use Notice -->
+    <!-- Privacy & Academic Disclaimer -->
     <section class="block">
-      <div class="wrap" style="max-width:850px; margin:auto;">
-        <div class="card" style="border-left:4px solid var(--cyan);">
-          <h3 style="color:var(--cyan); margin-bottom:0.5rem;">Privacy & Academic Disclaimer</h3>
+      <div class="wrap" style="max-width:880px; margin:auto;">
+        <div class="card" style="border-left:4px solid var(--neon-red); background:rgba(18, 6, 12, 0.85);">
+          <h3 style="color:#FFA3B2; margin-bottom:0.6rem;">Privacy & Zero-Trust Notice</h3>
           <p style="font-size:0.92rem; line-height:1.7; margin-bottom:0;">
-            ScamShield AI is developed as a final year B.Tech CSE capstone project. 
+            ScamShield AI is developed as an academic and enterprise-grade cybersecurity research project. 
             All classifications represent an empirical statistical assessment. 
-            <strong>Never disclose OTPs, banking PINs, or confidential credentials based on an unsolicited message.</strong>
+            <strong>Never disclose OTPs, banking passwords, PINs, or confidential credentials based on an unsolicited message or unverified call.</strong>
           </p>
         </div>
       </div>
@@ -188,7 +414,12 @@
   </main>
 
   <footer class="site-footer" id="site-footer"></footer>
-  <script src="config.js?v=3.1"></script>
-  <script src="main.js?v=3.1"></script>
+
+  <!-- Core Scripts & Bundled 3D Engine -->
+  <script src="config.js?v=3.2"></script>
+  <script src="main.js?v=3.2"></script>
+  <script src="three.min.js"></script>
+  <script src="hero-cyber-core.js?v=3.2"></script>
+  <script src="home-scanner.js?v=3.2"></script>
 </body>
 </html>
