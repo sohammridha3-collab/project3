@@ -130,9 +130,10 @@
             <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.4rem; font-weight:600; text-transform:uppercase;">Quick Test Samples:</div>
             <div class="preset-chips">
               <span class="chip" data-sample="https://www.wikipedia.org">✅ Legit Domain</span>
-              <span class="chip" data-sample="http://paypal.verification-portal.account-security.badsite.com/login">🚨 Phishing Subdomain</span>
+              <span class="chip" data-sample="http://forum.uk.securebankinggroup.com/107519/8af662/phish">🎣 Phishing Dataset Sample</span>
+              <span class="chip" data-sample="http://paypal.verification-portal.account-security.badsite.com/login">🚨 Brand Spoofing</span>
+              <span class="chip" data-sample="http://78.51.220.142:8080/sshd">🌐 IP Host Target</span>
               <span class="chip" data-sample="https://google.com@phishing-target.xyz/auth">⚠️ Deceptive @ Symbol</span>
-              <span class="chip" data-sample="https://xn--pple-43d.com">🔍 Punycode IDN</span>
               <span class="chip" data-sample="https://bit.ly/example-shortener">🔗 URL Shortener</span>
             </div>
 
@@ -153,6 +154,14 @@
                   <button type="button" class="btn btn-ghost btn-sm" id="btn-paste-url">📋 Paste</button>
                   <button type="button" class="btn btn-ghost btn-sm" id="btn-clear-url">🗑️ Clear</button>
                 </div>
+              </div>
+
+              <!-- Instant ML Scan Toggle -->
+              <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.75rem; margin-bottom:0.25rem;">
+                <input type="checkbox" id="fast-scan-toggle" name="fast_scan" style="cursor:pointer; width:16px; height:16px; accent-color:var(--cyan);">
+                <label for="fast-scan-toggle" style="font-size:0.82rem; color:var(--text-muted); cursor:pointer; margin:0; user-select:none;">
+                  ⚡ <strong>Instant ML Scan</strong> (&lt;15ms, in-memory HistGradientBoosting classifier)
+                </label>
               </div>
 
               <div id="urlscan-error" class="form-error" hidden role="alert"></div>
@@ -238,6 +247,18 @@
                 </div>
                 <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;" id="res-score-desc">
                   Deterministic threat evaluation based on observed domain heuristics, encryption status, and redirects.
+                </div>
+              </div>
+
+              <!-- Machine Learning Detection Banner -->
+              <div id="ml-verdict-banner" style="display:none; margin-top:1.25rem; padding:0.85rem 1rem; border-radius:8px; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; background:rgba(30, 41, 59, 0.7); border:1px solid var(--navy-border);">
+                <div>
+                  <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-dim); font-weight:700; letter-spacing:0.5px;">🤖 ML Phishing Model Inference</div>
+                  <div id="ml-verdict-text" style="font-size:0.92rem; font-weight:600; color:#F8FAFC; margin-top:2px;">HistGradientBoosting (Balanced)</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                  <span id="ml-prob-badge" style="font-size:0.82rem; font-family:var(--font-mono); font-weight:700; padding:3px 8px; border-radius:4px; background:rgba(16,185,129,0.15); color:#34D399; border:1px solid rgba(16,185,129,0.3);">Risk: --</span>
+                  <span id="ml-duration-badge" style="font-size:0.75rem; font-family:var(--font-mono); color:var(--text-dim);">--ms</span>
                 </div>
               </div>
 

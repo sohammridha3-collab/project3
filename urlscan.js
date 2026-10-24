@@ -47,6 +47,13 @@
   const tileTls = document.getElementById("tile-tls");
   const tileRedirects = document.getElementById("tile-redirects");
 
+  // ML Detection elements
+  const fastScanToggle = document.getElementById("fast-scan-toggle");
+  const mlVerdictBanner = document.getElementById("ml-verdict-banner");
+  const mlVerdictText = document.getElementById("ml-verdict-text");
+  const mlProbBadge = document.getElementById("ml-prob-badge");
+  const mlDurationBadge = document.getElementById("ml-duration-badge");
+
   // Lists
   const checksContainer = document.getElementById("checks-container");
   const findingsContainer = document.getElementById("findings-container");
@@ -185,7 +192,10 @@
 
     try {
       const endpoint = (cfg && cfg.ENDPOINTS && cfg.ENDPOINTS.urlScan) ? cfg.ENDPOINTS.urlScan : "/api/url-scan";
-      const payload = { url: validation.url };
+      const payload = { 
+        url: validation.url,
+        fast_scan_only: fastScanToggle ? fastScanToggle.checked : false
+      };
 
       const result = await apiFetch(endpoint, {
         method: "POST",
@@ -278,6 +288,32 @@
     resVerdictSubtitle.textContent = normalizedUrl;
     resThreatScore.textContent = `${score.toFixed(1)} / 100`;
     resThreatBar.style.width = `${Math.min(Math.max(score, 5), 100)}%`;
+
+    // Render ML Model Phishing Verdict Banner
+    if (mlVerdictBanner && data.ml_prediction && data.ml_prediction.available) {
+      const ml = data.ml_prediction;
+      mlVerdictBanner.style.display = "flex";
+      const probPct = (ml.phishing_probability * 100).toFixed(1);
+      const isPhish = ml.is_phishing;
+      mlVerdictText.textContent = `${ml.model_name || 'Machine Learning'}: ${ml.predicted_class || (isPhish ? 'Phishing' : 'Benign')} (${ml.confidence_percentage || probPct + '%'} confidence)`;
+      
+      if (isPhish) {
+        mlProbBadge.textContent = `Risk: ${probPct}% (Phishing)`;
+        mlProbBadge.style.background = "rgba(239, 68, 68, 0.15)";
+        mlProbBadge.style.color = "#F87171";
+        mlProbBadge.style.borderColor = "rgba(239, 68, 68, 0.35)";
+      } else {
+        mlProbBadge.textContent = `Risk: ${probPct}% (Benign)`;
+        mlProbBadge.style.background = "rgba(16, 185, 129, 0.15)";
+        mlProbBadge.style.color = "#34D399";
+        mlProbBadge.style.borderColor = "rgba(16, 185, 129, 0.35)";
+      }
+      if (typeof ml.duration_ms === "number") {
+        mlDurationBadge.textContent = `⚡${ml.duration_ms.toFixed(1)}ms`;
+      }
+    } else if (mlVerdictBanner) {
+      mlVerdictBanner.style.display = "none";
+    }
 
     // Metrics Tiles
     const domainInfo = data.domain_info || {};

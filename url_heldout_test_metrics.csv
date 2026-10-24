@@ -1,0 +1,2 @@
+model_name,val_f1,test_accuracy,test_precision,test_recall,test_f1,test_roc_auc,test_fpr,confusion_matrix,fit_time_sec,infer_latency_ms_per_sample
+HistGradientBoosting (Balanced),0.985,0.9786,0.9991,0.9752,0.987,0.9979,0.00428,"{'TN': 4654, 'FP': 20, 'FN': 592, 'TP': 23295}",3.924,0.008

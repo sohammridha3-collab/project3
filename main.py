@@ -50,9 +50,11 @@ from schemas import (
     ScanStatsResponse,
     CallScanResponse,
     UrlScanRequest,
-    UrlScanResponse
+    UrlScanResponse,
+    UrlModelInfoResponse
 )
 from model_service import get_model_service, ModelLoadError
+from url_model_service import get_url_model_service
 from call_service import validate_audio_file, analyze_call_audio
 from url_scanner_service import scan_url, SsrfBlockError
 
@@ -64,7 +66,7 @@ logging.basicConfig(
 logger = logging.getLogger("scamshield.api")
 
 
-# Lifespan: initialize database and load ML pipeline once at application start
+# Lifespan: initialize database and load ML pipelines once at application start
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing ScamShield AI FastAPI Service...")
@@ -75,13 +77,21 @@ async def lifespan(app: FastAPI):
     except Exception as db_exc:
         logger.error(f"❌ Database initialization failed: {db_exc}", exc_info=True)
 
-    # 2. Load ML model pipeline
+    # 2. Load Text/SMS ML model pipeline
     model_service = get_model_service()
     try:
         model_service.load_model()
-        logger.info("✅ ML model pipeline successfully loaded and ready for inference.")
+        logger.info("✅ ML message model pipeline successfully loaded and ready for inference.")
     except ModelLoadError as exc:
-        logger.error(f"❌ Failed to load model pipeline at startup: {exc}")
+        logger.error(f"❌ Failed to load message model pipeline at startup: {exc}")
+
+    # 3. Load URL Phishing ML model pipeline
+    url_service = get_url_model_service()
+    try:
+        url_service.load_model()
+        logger.info(f"✅ URL Phishing ML model pipeline ({url_service.classifier_name}) successfully loaded.")
+    except Exception as exc:
+        logger.error(f"❌ Failed to load URL model pipeline at startup: {exc}")
 
     yield
     logger.info("Shutting down ScamShield AI FastAPI service...")
@@ -337,8 +347,12 @@ async def scan_website_url(
         )
 
     try:
-        # Offload synchronous network inspection to worker thread to avoid blocking the asyncio event loop
-        result = await asyncio.to_thread(scan_url, payload.url.strip())
+        # Offload synchronous inspection to worker thread to avoid blocking the asyncio event loop
+        result = await asyncio.to_thread(
+            scan_url,
+            payload.url.strip(),
+            fast_scan_only=bool(payload.fast_scan_only)
+        )
     except SsrfBlockError as ssrf_err:
         logger.warning(f"Blocked SSRF attempt: {ssrf_err}")
         raise HTTPException(
@@ -923,16 +937,20 @@ async def delete_call_record(call_id: int, user: User = Depends(get_current_user
 async def health_check():
     """Health check endpoint returning system status and model readiness."""
     service = get_model_service()
+    url_service = get_url_model_service()
     if not service.is_loaded:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Model is not loaded or initialization failed."
+            detail="Message scam model is not loaded or initialization failed."
         )
     return HealthResponse(
         status="healthy",
         model_loaded=service.is_loaded,
         model_file=service.model_path.name,
         classifier=service.classifier_name,
+        url_model_loaded=url_service.is_loaded,
+        url_classifier=url_service.classifier_name,
+        url_model_file=url_service.model_path.name if url_service.model_path else "None",
         api_version=API_VERSION,
         project_title=PROJECT_TITLE
     )
@@ -958,6 +976,30 @@ async def model_metrics():
         "selected_model": info.get("model_name"),
         "heldout_test_metrics": info.get("heldout_test_metrics"),
         "cross_validation_comparison": info.get("cross_validation_results")
+    }
+
+
+@app.get("/url-model/info", tags=["URL Model"])
+@app.get("/api/url-model/info", tags=["URL Model"])
+async def url_model_info():
+    """Returns architecture specifications, dataset verification, and held-out test evaluation for the URL Phishing Classifier."""
+    url_service = get_url_model_service()
+    if not url_service.is_loaded:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="URL Phishing model is not loaded.")
+    return url_service.metadata
+
+
+@app.get("/url-model/metrics", tags=["URL Model"])
+@app.get("/api/url-model/metrics", tags=["URL Model"])
+async def url_model_metrics():
+    """Returns held-out test metrics and classifier comparisons for the URL Phishing Classifier."""
+    url_service = get_url_model_service()
+    meta = url_service.metadata
+    return {
+        "selected_model": meta.get("selected_classifier"),
+        "heldout_test_metrics": meta.get("heldout_test_metrics"),
+        "comparison_results": meta.get("comparison_results"),
+        "label_mapping": meta.get("label_mapping")
     }
 
 

@@ -16,6 +16,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse, urlsplit, urlunsplit, urljoin, parse_qs
 
+from url_model_service import get_url_model_service
+
 logger = logging.getLogger("scamshield.url_scanner")
 
 # -----------------------------------------------------------------------------
@@ -1003,14 +1005,16 @@ def check_threat_intelligence(url: str, timeout: float = 2.0) -> Dict[str, Any]:
 # MAIN HIGH-SPEED PARALLEL SCANNER PIPELINE
 # -----------------------------------------------------------------------------
 
-def scan_url(raw_url: str, deadline: float = TOTAL_SCAN_DEADLINE_SECONDS) -> Dict[str, Any]:
+def scan_url(raw_url: str, deadline: float = TOTAL_SCAN_DEADLINE_SECONDS, fast_scan_only: bool = False) -> Dict[str, Any]:
     """
     Executes complete, fast, concurrent, SSRF-safe URL inspection:
     1. Normalization & validation.
-    2. Pre-flight SSRF & DNS resolution with local scan-scoped cache.
-    3. Structural & brand impersonation heuristics.
-    4. Concurrent execution of TLS inspection, redirect probing, and threat intel.
-    5. Calibrated classification: Low Risk, Suspicious, High Risk, or Unknown.
+    2. Structural & brand impersonation heuristics.
+    3. Machine Learning Phishing Classification via trained HistGradientBoosting pipeline (<1ms).
+    4. Optional instant return if fast_scan_only=True (<15ms).
+    5. Pre-flight SSRF & DNS resolution with local scan-scoped cache.
+    6. Concurrent execution of TLS inspection, redirect probing, and threat intel.
+    7. Calibrated multi-layer risk classification (Low Risk, Suspicious, High Risk, or Unknown).
     """
     t_start = time.perf_counter()
     scan_timestamp = datetime.now(timezone.utc)
@@ -1019,7 +1023,125 @@ def scan_url(raw_url: str, deadline: float = TOTAL_SCAN_DEADLINE_SECONDS) -> Dic
     # Phase 1: Normalize & Validate URL
     normalized_url, components = normalize_and_validate_url(raw_url)
 
-    # Phase 2: SSRF Pre-flight DNS validation
+    # Phase 2: URL Structure & Heuristic Analysis (in-memory, <1ms)
+    structure_res = analyze_url_structure(raw_url, normalized_url, components)
+    findings = list(structure_res["findings"])
+    checks = list(structure_res["checks"])
+    threat_points = structure_res["threat_points"]
+    impersonated_brand = structure_res["impersonated_brand"]
+
+    # Phase 3: Machine Learning Phishing Model Inference (in-memory, <1ms)
+    ml_service = get_url_model_service()
+    ml_res = ml_service.predict_url(raw_url)
+    ml_prob = ml_res.get("phishing_probability", 0.0) if ml_res.get("available") else 0.0
+    is_ml_phishing = ml_res.get("is_phishing", False) if ml_res.get("available") else False
+
+    if ml_res.get("available"):
+        if is_ml_phishing and ml_prob >= 0.70:
+            ml_status = "fail"
+            threat_points += min(60.0, ml_prob * 60.0)
+            findings.append(f"Machine Learning Phishing Alert: Model flagged URL as Phishing ({ml_prob*100:.1f}% risk score).")
+        elif ml_prob >= 0.40:
+            ml_status = "warning"
+            threat_points += ml_prob * 30.0
+            findings.append(f"Machine Learning Warning: Elevated phishing probability ({ml_prob*100:.1f}%) detected.")
+        else:
+            ml_status = "pass"
+
+        checks.append({
+            "name": "Machine Learning Phishing Classifier",
+            "category": "Machine Learning",
+            "status": ml_status,
+            "description": f"Phishing URL classification via trained {ml_res['model_name']} on Kaggle dataset.",
+            "details": f"Estimated phishing probability: {ml_prob*100:.1f}%. Predicted class: {ml_res['predicted_class']}.",
+            "duration_ms": ml_res["duration_ms"]
+        })
+    else:
+        checks.append({
+            "name": "Machine Learning Phishing Classifier",
+            "category": "Machine Learning",
+            "status": "unavailable",
+            "description": "Phishing URL classification via trained scikit-learn model.",
+            "details": ml_res.get("error", "Model service unavailable."),
+            "duration_ms": 0.0
+        })
+
+    # Phase 4: Instant Fast-Scan Mode (skips live network round-trips for <15ms execution)
+    if fast_scan_only:
+        has_severe_heuristics = (
+            components["has_userinfo"] 
+            or (impersonated_brand is not None and threat_points >= 35.0)
+            or (components["has_punycode"] and threat_points >= 30.0)
+        )
+        if is_ml_phishing and ml_prob >= 0.75:
+            classification = "High Risk"
+            risk_score = min(max(round(threat_points, 1), 65.0), 100.0)
+        elif has_severe_heuristics or threat_points >= 40.0:
+            classification = "High Risk"
+            risk_score = min(max(round(threat_points, 1), 50.0), 100.0)
+        elif is_ml_phishing or threat_points >= 15.0 or ml_prob >= 0.40:
+            classification = "Suspicious"
+            risk_score = min(max(round(threat_points, 1), 25.0), 100.0)
+        else:
+            classification = "Low Risk"
+            risk_score = min(max(round(threat_points, 1), 0.0), 100.0)
+
+        checks.append({
+            "name": "Live Network Probing",
+            "category": "Network",
+            "status": "info",
+            "description": "Safe live network probes and TLS checks were skipped due to Fast Scan mode.",
+            "details": "Fast scan completed using in-memory ML model and structural heuristics.",
+            "duration_ms": 0.0
+        })
+
+        recommendations = []
+        if classification == "High Risk":
+            recommendations.append("Do NOT visit this link or enter passwords, phone numbers, or credit card information.")
+            recommendations.append("If this link was received via email or SMS, mark it as phishing or spam in your client.")
+        elif classification == "Suspicious":
+            recommendations.append("Exercise heightened caution before navigating to or interacting with this website.")
+            recommendations.append("Verify the website's authenticity through an independent search or bookmarks.")
+        else:
+            recommendations.append("No prominent phishing indicators detected by automated machine learning scanning.")
+            recommendations.append("Always verify the exact domain name before submitting sensitive credentials.")
+
+        elapsed_fast = round((time.perf_counter() - t_start) * 1000, 1)
+        return {
+            "url": raw_url,
+            "normalized_url": normalized_url,
+            "classification": classification,
+            "risk_score": risk_score,
+            "ml_prediction": ml_res,
+            "checks": checks,
+            "findings": findings,
+            "recommendations": recommendations,
+            "scan_timestamp": scan_timestamp,
+            "domain_info": structure_res["domain_info"],
+            "https_info": {
+                "is_https": components["scheme"] == "https",
+                "cert_valid": None,
+                "issuer": None,
+                "subject": None,
+                "expires": None
+            },
+            "redirect_info": {
+                "redirect_count": 0,
+                "final_destination": normalized_url,
+                "chain": []
+            },
+            "threat_intel_info": {
+                "configured": False,
+                "checked": False,
+                "matched": False,
+                "notes": "Skipped in Fast Scan mode."
+            },
+            "resolved_ip": None,
+            "scan_duration_ms": elapsed_fast,
+            "disclaimer": "Automated security checks evaluate observed technical indicators, machine learning classifications, and heuristics. They cannot guarantee that a website is free from fraud, social engineering, or emerging threats."
+        }
+
+    # Phase 5: SSRF Pre-flight DNS validation
     primary_ip = None
     dns_error = None
     try:
@@ -1030,18 +1152,9 @@ def scan_url(raw_url: str, deadline: float = TOTAL_SCAN_DEADLINE_SECONDS) -> Dic
         )
         primary_ip = resolved_ips[0] if resolved_ips else None
     except SsrfBlockError as ssrf_err:
-        # Strict security: SSRF attempts are rejected immediately
         raise ssrf_err
     except Exception as dns_exc:
-        # DNS failed, server not resolvable
         dns_error = str(dns_exc)
-
-    # Phase 3: URL Structure & Heuristic Analysis (in-memory, <1ms)
-    structure_res = analyze_url_structure(raw_url, normalized_url, components)
-    findings = list(structure_res["findings"])
-    checks = list(structure_res["checks"])
-    threat_points = structure_res["threat_points"]
-    impersonated_brand = structure_res["impersonated_brand"]
 
     # If DNS resolution failed completely, we cannot execute active network probing
     if dns_error:
@@ -1072,16 +1185,19 @@ def scan_url(raw_url: str, deadline: float = TOTAL_SCAN_DEADLINE_SECONDS) -> Dic
         })
 
         # Classification for unresolvable host:
-        # If severe heuristics are detected (e.g. deceptive @ or brand spoofing), mark Suspicious/High Risk.
-        # Otherwise, mark Unknown (insufficient evidence to assess a non-existent or unresolvable destination).
-        if threat_points >= 35.0:
+        # If severe heuristics or ML phishing detected, mark Suspicious/High Risk.
+        if is_ml_phishing and ml_prob >= 0.70:
+            classification = "High Risk"
+            risk_score = min(max(round(threat_points, 1), 60.0), 100.0)
+            findings.append(f"Host does not resolve via DNS ({dns_error}), and Machine Learning model detected severe phishing patterns ({ml_prob*100:.1f}% probability).")
+        elif threat_points >= 35.0 or (is_ml_phishing and ml_prob >= 0.50):
             classification = "High Risk" if threat_points >= 50.0 else "Suspicious"
-            risk_score = threat_points
-            findings.append(f"Host does not resolve via DNS ({dns_error}), but severe phishing patterns were detected in the URL structure.")
+            risk_score = min(max(round(threat_points, 1), 35.0), 100.0)
+            findings.append(f"Host does not resolve via DNS ({dns_error}), but suspicious phishing patterns were detected in the URL.")
         else:
             classification = "Unknown"
             risk_score = 0.0
-            findings.append(f"Host '{components['host']}' could not be resolved via DNS. Destination is inactive, unreachble, or expired. Insufficient evidence to evaluate safety.")
+            findings.append(f"Host '{components['host']}' could not be resolved via DNS. Destination is inactive, unreachable, or expired. Insufficient evidence to evaluate safety.")
 
         recommendations = [
             "This web destination could not be located via DNS and may be defunct, misspelled, or taken down.",
@@ -1094,6 +1210,7 @@ def scan_url(raw_url: str, deadline: float = TOTAL_SCAN_DEADLINE_SECONDS) -> Dic
             "normalized_url": normalized_url,
             "classification": classification,
             "risk_score": risk_score,
+            "ml_prediction": ml_res,
             "checks": checks,
             "findings": findings,
             "recommendations": recommendations,
@@ -1119,7 +1236,7 @@ def scan_url(raw_url: str, deadline: float = TOTAL_SCAN_DEADLINE_SECONDS) -> Dic
             },
             "resolved_ip": None,
             "scan_duration_ms": elapsed_total,
-            "disclaimer": "Automated security checks evaluate observed technical indicators and heuristics. They cannot guarantee that a website is free from fraud, social engineering, or emerging threats."
+            "disclaimer": "Automated security checks evaluate observed technical indicators, machine learning classifications, and heuristics. They cannot guarantee that a website is free from fraud, social engineering, or emerging threats."
         }
 
     # Add DNS check status
@@ -1397,6 +1514,7 @@ def scan_url(raw_url: str, deadline: float = TOTAL_SCAN_DEADLINE_SECONDS) -> Dic
         "normalized_url": normalized_url,
         "classification": classification,
         "risk_score": risk_score,
+        "ml_prediction": ml_res,
         "checks": checks,
         "findings": findings,
         "recommendations": recommendations,

@@ -1,0 +1,204 @@
+{
+  "model_type": "URL Phishing Classifier Pipeline",
+  "selected_classifier": "HistGradientBoosting (Balanced)",
+  "artifact_file": "url_classifier_pipeline.joblib",
+  "training_timestamp": "2026-10-24T15:04:53Z",
+  "dataset_verification": {
+    "dataset_name": "Phishing URLs Dataset with Extracted Features",
+    "dataset_author": "Victus Adi (Kaggle)",
+    "dataset_license": "CC0: Public Domain (https://creativecommons.org/publicdomain/zero/1.0/)",
+    "dataset_source_url": "https://www.kaggle.com/datasets/victusadi/phishing-urls-dataset-with-extracted-features",
+    "total_rows": 160064,
+    "total_columns": 13,
+    "columns": [
+      "url",
+      "label",
+      "url_length",
+      "num_dots",
+      "has_https",
+      "has_ip",
+      "num_subdirs",
+      "num_params",
+      "suspicious_words",
+      "tld",
+      "special_char_count",
+      "digits_count",
+      "entropy"
+    ],
+    "missing_values": {
+      "url": 0,
+      "label": 0,
+      "url_length": 0,
+      "num_dots": 0,
+      "has_https": 0,
+      "has_ip": 0,
+      "num_subdirs": 0,
+      "num_params": 0,
+      "suspicious_words": 0,
+      "tld": 821,
+      "special_char_count": 0,
+      "digits_count": 0,
+      "entropy": 0
+    },
+    "exact_duplicates": 0,
+    "class_distribution": {
+      "0 (Benign)": 820,
+      "1 (Phishing)": 159244
+    },
+    "verified_label_mapping": {
+      "0": "Benign / Legitimate Website",
+      "1": "Phishing / Malicious Website"
+    }
+  },
+  "training_split": {
+    "train_samples": 133282,
+    "val_samples": 28561,
+    "test_samples": 28561,
+    "split_ratio": "70% Train / 15% Validation / 15% Test (Stratified)"
+  },
+  "feature_schema": {
+    "numeric_features": [
+      "url_length",
+      "num_dots",
+      "has_https",
+      "has_ip",
+      "num_subdirs",
+      "num_params",
+      "suspicious_words",
+      "special_char_count",
+      "digits_count",
+      "entropy"
+    ],
+    "categorical_features": [
+      "tld_top"
+    ],
+    "top_tlds_vocabulary": [
+      "unknown",
+      "com",
+      "ru",
+      "org",
+      "edu",
+      "net",
+      "de",
+      "app",
+      "dev",
+      "me",
+      "ly",
+      "to",
+      "page",
+      "info",
+      "io",
+      "online",
+      "help",
+      "co",
+      "link",
+      "cn",
+      "site",
+      "cc",
+      "gov",
+      "in",
+      "xyz",
+      "cfd",
+      "shop",
+      "se",
+      "com.br",
+      "bio"
+    ]
+  },
+  "heldout_test_metrics": {
+    "model_name": "HistGradientBoosting (Balanced)",
+    "val_f1": 0.985,
+    "test_accuracy": 0.9786,
+    "test_precision": 0.9991,
+    "test_recall": 0.9752,
+    "test_f1": 0.987,
+    "test_roc_auc": 0.9979,
+    "test_fpr": 0.00428,
+    "confusion_matrix": {
+      "TN": 4654,
+      "FP": 20,
+      "FN": 592,
+      "TP": 23295
+    },
+    "fit_time_sec": 3.924,
+    "infer_latency_ms_per_sample": 0.008
+  },
+  "comparison_results": [
+    {
+      "model_name": "Logistic Regression (Balanced)",
+      "val_f1": 0.96,
+      "test_accuracy": 0.9389,
+      "test_precision": 0.9961,
+      "test_recall": 0.9305,
+      "test_f1": 0.9622,
+      "test_roc_auc": 0.9884,
+      "test_fpr": 0.0184,
+      "confusion_matrix": {
+        "TN": 4588,
+        "FP": 86,
+        "FN": 1660,
+        "TP": 22227
+      },
+      "fit_time_sec": 1.574,
+      "infer_latency_ms_per_sample": 0.001
+    },
+    {
+      "model_name": "Calibrated Linear SVC",
+      "val_f1": 0.9698,
+      "test_accuracy": 0.9524,
+      "test_precision": 0.9752,
+      "test_recall": 0.9677,
+      "test_f1": 0.9714,
+      "test_roc_auc": 0.9878,
+      "test_fpr": 0.1258,
+      "confusion_matrix": {
+        "TN": 4086,
+        "FP": 588,
+        "FN": 772,
+        "TP": 23115
+      },
+      "fit_time_sec": 2.456,
+      "infer_latency_ms_per_sample": 0.002
+    },
+    {
+      "model_name": "HistGradientBoosting (Balanced)",
+      "val_f1": 0.985,
+      "test_accuracy": 0.9786,
+      "test_precision": 0.9991,
+      "test_recall": 0.9752,
+      "test_f1": 0.987,
+      "test_roc_auc": 0.9979,
+      "test_fpr": 0.00428,
+      "confusion_matrix": {
+        "TN": 4654,
+        "FP": 20,
+        "FN": 592,
+        "TP": 23295
+      },
+      "fit_time_sec": 3.924,
+      "infer_latency_ms_per_sample": 0.008
+    },
+    {
+      "model_name": "Random Forest (Balanced Subsample)",
+      "val_f1": 0.9672,
+      "test_accuracy": 0.9503,
+      "test_precision": 0.9997,
+      "test_recall": 0.9409,
+      "test_f1": 0.9694,
+      "test_roc_auc": 0.9963,
+      "test_fpr": 0.0015,
+      "confusion_matrix": {
+        "TN": 4667,
+        "FP": 7,
+        "FN": 1412,
+        "TP": 22475
+      },
+      "fit_time_sec": 7.032,
+      "infer_latency_ms_per_sample": 0.004
+    }
+  ],
+  "label_mapping": {
+    "0": "Benign",
+    "1": "Phishing"
+  }
+}

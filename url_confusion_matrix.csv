@@ -1,0 +1,3 @@
+Actual,Pred_Benign (TN),Pred_Phishing (FP),Pred_Benign (FN),Pred_Phishing (TP)
+Benign (0),4654.0,20.0,,
+Phishing (1),,,592.0,23295.0

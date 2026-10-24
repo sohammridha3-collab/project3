@@ -1,0 +1,5 @@
+model_name,val_f1,test_accuracy,test_precision,test_recall,test_f1,test_roc_auc,test_fpr,confusion_matrix,fit_time_sec,infer_latency_ms_per_sample
+Logistic Regression (Balanced),0.96,0.9389,0.9961,0.9305,0.9622,0.9884,0.0184,"{'TN': 4588, 'FP': 86, 'FN': 1660, 'TP': 22227}",1.574,0.001
+Calibrated Linear SVC,0.9698,0.9524,0.9752,0.9677,0.9714,0.9878,0.1258,"{'TN': 4086, 'FP': 588, 'FN': 772, 'TP': 23115}",2.456,0.002
+HistGradientBoosting (Balanced),0.985,0.9786,0.9991,0.9752,0.987,0.9979,0.00428,"{'TN': 4654, 'FP': 20, 'FN': 592, 'TP': 23295}",3.924,0.008
+Random Forest (Balanced Subsample),0.9672,0.9503,0.9997,0.9409,0.9694,0.9963,0.0015,"{'TN': 4667, 'FP': 7, 'FN': 1412, 'TP': 22475}",7.032,0.004

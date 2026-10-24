@@ -316,8 +316,29 @@ class HealthResponse(BaseModel):
     model_loaded: bool = Field(..., examples=[True])
     model_file: str = Field(..., examples=["scam_detection_pipeline.pkl"])
     classifier: str = Field(..., examples=["LinearSVC"])
+    url_model_loaded: Optional[bool] = Field(default=None, examples=[True])
+    url_classifier: Optional[str] = Field(default=None, examples=["HistGradientBoosting (Balanced)"])
+    url_model_file: Optional[str] = Field(default=None, examples=["url_classifier_pipeline.joblib"])
     api_version: str = Field(..., examples=["1.0.0"])
     project_title: str = Field(..., examples=["AI-Based Scam Message Detection"])
+
+
+class UrlModelInfoResponse(BaseModel):
+    """
+    URL phishing model metadata and held-out test evaluation specifications.
+    """
+    model_config = ConfigDict(protected_namespaces=())
+
+    model_type: str
+    selected_classifier: str
+    artifact_file: str
+    training_timestamp: str
+    dataset_verification: Dict[str, Any]
+    training_split: Dict[str, Any]
+    feature_schema: Dict[str, Any]
+    heldout_test_metrics: Dict[str, Any]
+    comparison_results: List[Dict[str, Any]]
+    label_mapping: Dict[str, str]
 
 
 # =============================================================================
@@ -365,11 +386,15 @@ class UrlScanRequest(BaseModel):
         description="Target website URL to inspect (supports http:// and https://).",
         examples=["https://example.com"]
     )
+    fast_scan_only: Optional[bool] = Field(
+        default=False,
+        description="If True, performs instant in-memory ML model inference and heuristic structure analysis (<15ms) without waiting for live network probes."
+    )
 
 
 class UrlSecurityCheck(BaseModel):
     name: str = Field(..., description="Name of the security check.")
-    category: str = Field(..., description="Category (Structure, Domain, Encryption, Network, Heuristics, Threat Intelligence).")
+    category: str = Field(..., description="Category (Structure, Domain, Encryption, Network, Heuristics, Threat Intelligence, Machine Learning).")
     status: str = Field(..., description="Result status: pass, warning, fail, unavailable, info.")
     description: str = Field(..., description="Brief explanation of the check.")
     details: Optional[str] = Field(default=None, description="Observed evidence or diagnostic details.")
@@ -383,6 +408,7 @@ class UrlScanResponse(BaseModel):
     normalized_url: str = Field(..., description="Safely normalized and parsed URL.")
     classification: str = Field(..., description="Risk verdict: Low Risk, Suspicious, High Risk, or Unknown.")
     risk_score: float = Field(..., description="Deterministic threat risk score between 0.0 and 100.0.")
+    ml_prediction: Optional[Dict[str, Any]] = Field(default=None, description="Trained Machine Learning model phishing prediction details.")
     checks: List[UrlSecurityCheck] = Field(default_factory=list, description="Granular security check results.")
     findings: List[str] = Field(default_factory=list, description="Evidence supporting detected security warnings.")
     recommendations: List[str] = Field(default_factory=list, description="Recommended user defense actions.")
@@ -395,7 +421,7 @@ class UrlScanResponse(BaseModel):
     resolved_ip: Optional[str] = Field(default=None, description="Resolved public IP address.")
     scan_duration_ms: Optional[float] = Field(default=None, description="Total scan execution duration in milliseconds.")
     disclaimer: str = Field(
-        default="Automated security checks evaluate observed technical indicators and heuristics. They cannot guarantee that a website is free from fraud, social engineering, or emerging threats.",
+        default="Automated security checks evaluate observed technical indicators, machine learning classifications, and heuristics. They cannot guarantee that a website is free from fraud, social engineering, or emerging threats.",
         description="Responsible disclosure disclaimer."
     )
 
