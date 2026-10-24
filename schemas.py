@@ -316,11 +316,27 @@ class HealthResponse(BaseModel):
     model_loaded: bool = Field(..., examples=[True])
     model_file: str = Field(..., examples=["scam_detection_pipeline.pkl"])
     classifier: str = Field(..., examples=["LinearSVC"])
+    database_connected: Optional[bool] = Field(default=None, examples=[True])
+    database_engine: Optional[str] = Field(default=None, examples=["sqlite"])
     url_model_loaded: Optional[bool] = Field(default=None, examples=[True])
     url_classifier: Optional[str] = Field(default=None, examples=["HistGradientBoosting (Balanced)"])
     url_model_file: Optional[str] = Field(default=None, examples=["url_classifier_pipeline.joblib"])
     api_version: str = Field(..., examples=["1.0.0"])
     project_title: str = Field(..., examples=["AI-Based Scam Message Detection"])
+
+
+class ReadinessResponse(BaseModel):
+    """
+    Readiness probe response verifying essential backend dependencies (DB, ML pipelines).
+    """
+    model_config = ConfigDict(protected_namespaces=())
+
+    status: str = Field(..., description="'ready' when all essential services are operational, else 'unready'.")
+    database_ready: bool
+    message_model_ready: bool
+    url_model_ready: bool
+    unready_components: List[str] = Field(default_factory=list)
+    timestamp: str
 
 
 class UrlModelInfoResponse(BaseModel):

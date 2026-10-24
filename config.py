@@ -68,7 +68,12 @@ DEFAULT_ORIGINS = [
 
 # Allow overriding via environment variable
 ENV_ORIGINS = os.getenv("CORS_ORIGINS", "")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "").strip()
+
 if ENV_ORIGINS:
     CORS_ORIGINS: List[str] = [origin.strip() for origin in ENV_ORIGINS.split(",") if origin.strip()]
 else:
-    CORS_ORIGINS: List[str] = DEFAULT_ORIGINS
+    CORS_ORIGINS: List[str] = list(DEFAULT_ORIGINS)
+
+if FRONTEND_URL and FRONTEND_URL not in CORS_ORIGINS:
+    CORS_ORIGINS.append(FRONTEND_URL)

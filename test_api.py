@@ -491,7 +491,29 @@ class TestScamShieldFullStack(unittest.TestCase):
         self.assertIn("main:app", procfile_content)
         self.assertIn("--host 0.0.0.0", procfile_content)
 
+    def test_16_readiness_probe(self):
+        """Verify /health/ready, /ready, and /api/health/ready report truthful status."""
+        for endpoint in ["/health/ready", "/ready", "/api/health/ready"]:
+            res = self.client.get(endpoint)
+            self.assertEqual(res.status_code, 200, f"{endpoint} returned status {res.status_code}")
+            data = res.json()
+            self.assertEqual(data["status"], "ready")
+            self.assertTrue(data["database_ready"])
+            self.assertTrue(data["message_model_ready"])
+            self.assertTrue(data["url_model_ready"])
+            self.assertEqual(data["unready_components"], [])
+
+    def test_17_database_health_in_health_response(self):
+        """Verify /health includes database connectivity and engine type."""
+        res = self.client.get("/health")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["status"], "healthy")
+        self.assertTrue(data.get("database_connected"))
+        self.assertIn(data.get("database_engine"), ["sqlite", "postgresql"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
 

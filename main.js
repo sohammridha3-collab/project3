@@ -88,11 +88,9 @@
   }
 
   async function apiFetch(endpoint, options = {}) {
-    const defaultApiUrl = (typeof window !== "undefined" && window.API_BASE_URL)
-      ? window.API_BASE_URL
-      : "https://project3-backend-fzlv.onrender.com";
-    const baseUrl = (cfg && cfg.API_BASE_URL) ? cfg.API_BASE_URL.replace(/\/+$/, "") : defaultApiUrl;
-    const url = endpoint.startsWith("http") ? endpoint : `${baseUrl}${endpoint}`;
+    const url = (cfg && typeof cfg.buildApiUrl === "function" && !endpoint.startsWith("http"))
+      ? cfg.buildApiUrl(endpoint)
+      : (endpoint.startsWith("http") ? endpoint : `${((cfg && cfg.API_BASE_URL) || "https://project3-backend-fzlv.onrender.com").replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`);
     const token = getToken();
     const headers = {
       ...(options.headers || {})
@@ -179,30 +177,13 @@
       clearTimeout(timeout);
       return data;
     } catch (err) {
-      // Automatic failover between Render and Localhost if primary returns 404, 405, 502, 503, or connection failure
-      const isOutdatedOrDown = (err instanceof ApiError && [404, 405, 502, 503].includes(err.status)) || !(err instanceof ApiError);
-      const isRemote = baseUrl.includes("onrender.com");
-      const fallbackBase = isRemote ? "http://127.0.0.1:8001" : "https://project3-backend-fzlv.onrender.com";
-
-      if (isOutdatedOrDown && !endpoint.startsWith("http")) {
-        try {
-          const fallbackUrl = `${fallbackBase}${endpoint}`;
-          console.warn(`[ScamShield AI] Primary API at ${baseUrl} returned ${err.status || 'connection error'}. Attempting fallback to ${fallbackBase}...`);
-          const fallbackData = await executeFetch(fallbackUrl);
-          clearTimeout(timeout);
-          return fallbackData;
-        } catch (fallbackErr) {
-          console.warn(`[ScamShield AI] Fallback API at ${fallbackBase} also unavailable:`, fallbackErr.message);
-        }
-      }
-
       clearTimeout(timeout);
       if (err.name === "AbortError") {
-        throw new ApiError(408, "The server took too long to respond. The Render backend may be waking up from sleep (cold start). Please wait a moment and try again.");
+        throw new ApiError(408, "The server took too long to respond. If the cloud backend is waking up from sleep (cold start), please wait 15–30 seconds and retry.");
       }
       if (err instanceof ApiError) throw err;
-      const targetHost = baseUrl || "https://project3-backend-fzlv.onrender.com";
-      throw new ApiError(0, `Cannot connect to ScamShield API at ${targetHost}. If the Render backend is waking up, please wait a few seconds and try again.`);
+      const targetHost = (cfg && cfg.API_BASE_URL) || "https://project3-backend-fzlv.onrender.com";
+      throw new ApiError(0, `Cannot connect to ScamShield API at ${targetHost}. Please check your internet connection or verify the backend service is running.`);
     }
   }
 

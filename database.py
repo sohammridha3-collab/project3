@@ -59,3 +59,23 @@ def init_db():
     """Initializes database tables on application startup."""
     import db_models  # Ensure models are imported
     Base.metadata.create_all(bind=engine)
+
+
+def check_database_health() -> dict:
+    """Verifies that the database engine is reachable and can execute queries."""
+    from sqlalchemy import text
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {
+            "connected": True,
+            "engine": "sqlite" if is_sqlite else "postgresql",
+            "error": None
+        }
+    except Exception as exc:
+        return {
+            "connected": False,
+            "engine": "sqlite" if is_sqlite else "postgresql",
+            "error": str(exc)
+        }
+

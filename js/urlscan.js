@@ -216,8 +216,8 @@
         resErrorTitle.textContent = "Invalid URL Format";
         resErrorMessage.textContent = err.detail || "The submitted URL could not be processed. Please check the address format.";
       } else if (err.status === 405) {
-        resErrorTitle.textContent = "Backend Deployment Pending";
-        resErrorMessage.textContent = "The cloud backend at Render is currently running an earlier build and has not completed deploying the URL Scanner service. Please trigger 'Manual Deploy' -> 'Deploy latest commit' in your Render dashboard, or open http://127.0.0.1:8001/urlscan.html to use the active local engine.";
+        resErrorTitle.textContent = "Backend Update Required";
+        resErrorMessage.textContent = "The backend service has not finished deploying the latest URL Scanner update. Please trigger 'Manual Deploy' -> 'Deploy latest commit' in your Render dashboard.";
       } else if (err.status === 408 || (err.message && err.message.includes("Render"))) {
         resErrorTitle.textContent = "Backend Connection Timeout";
         resErrorMessage.textContent = "The server took too long to respond. The Render free-tier cloud backend may be waking up from sleep. Please click 'Try Again' now that the backend is awake.";

@@ -25,7 +25,7 @@ from sqlalchemy import desc, or_
 import tempfile
 
 from config import PROJECT_TITLE, API_VERSION, DESCRIPTION, CORS_ORIGINS, HOST, PORT, BASE_DIR, IS_PRODUCTION
-from database import get_db, init_db
+from database import get_db, init_db, check_database_health
 from db_models import User, ScanRecord, CallScanRecord
 from auth_utils import (
     hash_password,
@@ -42,6 +42,7 @@ from schemas import (
     BatchPredictionResponse,
     ModelInfoResponse,
     HealthResponse,
+    ReadinessResponse,
     UserRegister,
     UserLogin,
     UserResponse,
@@ -935,24 +936,68 @@ async def delete_call_record(call_id: int, user: User = Depends(get_current_user
 @app.get("/health", response_model=HealthResponse, tags=["System"])
 @app.get("/api/health", response_model=HealthResponse, tags=["System"])
 async def health_check():
-    """Health check endpoint returning system status and model readiness."""
+    """Lightweight health probe returning system status, database connectivity, and model states."""
     service = get_model_service()
     url_service = get_url_model_service()
-    if not service.is_loaded:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Message scam model is not loaded or initialization failed."
-        )
+    db_health = check_database_health()
+    
+    is_healthy = service.is_loaded and db_health.get("connected", False)
     return HealthResponse(
-        status="healthy",
+        status="healthy" if is_healthy else "degraded",
         model_loaded=service.is_loaded,
-        model_file=service.model_path.name,
+        model_file=service.model_path.name if service.model_path else "None",
         classifier=service.classifier_name,
+        database_connected=db_health.get("connected", False),
+        database_engine=db_health.get("engine", "sqlite"),
         url_model_loaded=url_service.is_loaded,
         url_classifier=url_service.classifier_name,
         url_model_file=url_service.model_path.name if url_service.model_path else "None",
         api_version=API_VERSION,
         project_title=PROJECT_TITLE
+    )
+
+
+@app.get("/health/ready", response_model=ReadinessResponse, tags=["System"])
+@app.get("/ready", response_model=ReadinessResponse, tags=["System"])
+@app.get("/api/health/ready", response_model=ReadinessResponse, tags=["System"])
+async def readiness_check():
+    """
+    Truthful readiness probe verifying that all essential backend dependencies (DB, ML pipelines) are operational.
+    Returns HTTP 503 if any required component is offline.
+    """
+    service = get_model_service()
+    url_service = get_url_model_service()
+    db_health = check_database_health()
+
+    unready = []
+    if not db_health.get("connected"):
+        unready.append(f"database ({db_health.get('error', 'disconnected')})")
+    if not service.is_loaded:
+        unready.append("message_scam_model")
+    if not url_service.is_loaded:
+        unready.append("url_phishing_model")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    if unready:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "status": "unready",
+                "database_ready": db_health.get("connected", False),
+                "message_model_ready": service.is_loaded,
+                "url_model_ready": url_service.is_loaded,
+                "unready_components": unready,
+                "timestamp": now_iso
+            }
+        )
+
+    return ReadinessResponse(
+        status="ready",
+        database_ready=True,
+        message_model_ready=True,
+        url_model_ready=True,
+        unready_components=[],
+        timestamp=now_iso
     )
 
 
