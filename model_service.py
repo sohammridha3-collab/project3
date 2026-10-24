@@ -204,46 +204,57 @@ class ScamDetectorService:
         is_scam = bool(predicted_label == 1)
 
         # 2. Probability and margin calculation
-        confidence: float = 0.5
+        scam_prob: float = 0.5
         decision_margin: Optional[float] = None
         score_type: str = "calibrated_sigmoid"
 
         if hasattr(self.pipeline, "predict_proba"):
             proba = self.pipeline.predict_proba([eval_text])[0]
-            confidence = float(proba[1])
+            scam_prob = float(proba[1])
             score_type = "predict_proba"
         elif hasattr(self.pipeline, "decision_function"):
             decision_val = float(np.ravel(self.pipeline.decision_function([eval_text]))[0])
             decision_margin = round(decision_val, 4)
             # Calibrated probability via standard Platt sigmoid: 1 / (1 + exp(-z))
-            confidence = float(1.0 / (1.0 + np.exp(-decision_val)))
+            scam_prob = float(1.0 / (1.0 + np.exp(-decision_val)))
             score_type = "calibrated_sigmoid"
         else:
-            confidence = 1.0 if is_scam else 0.0
+            scam_prob = 1.0 if is_scam else 0.0
             score_type = "binary_hard_assignment"
 
-        # Bound confidence between 0.001 and 0.999 for numerical stability
-        confidence = max(0.001, min(0.999, confidence))
+        # Bound scam_prob between 0.001 and 0.999 for numerical stability
+        scam_prob = max(0.001, min(0.999, scam_prob))
 
-        # 3. Categorize risk level
-        if confidence >= 0.75:
+        # 3. Extract explainable heuristic indicators
+        indicators = self._extract_indicators(eval_text)
+
+        # 4. Categorize risk level and borderline uncertainty
+        is_borderline = False
+        if abs(decision_margin if decision_margin is not None else 0.0) < 0.15 and len(indicators) == 0:
+            is_borderline = True
+            risk_level = "BORDERLINE_UNCERTAIN"
+        elif scam_prob >= 0.75:
             risk_level = "HIGH_RISK"
-        elif confidence >= 0.50:
+        elif scam_prob >= 0.50:
             risk_level = "SUSPICIOUS"
-        elif confidence >= 0.25:
+        elif scam_prob >= 0.25:
             risk_level = "LOW_RISK"
         else:
             risk_level = "SAFE_LEGITIMATE"
 
-        # 4. Extract explainable heuristic indicators
-        indicators = self._extract_indicators(eval_text)
+        # Class-specific confidence: true probability of the predicted class
+        pred_confidence = scam_prob if is_scam else (1.0 - scam_prob)
+        pred_confidence = max(0.50, min(0.999, pred_confidence))
 
         return {
             "is_scam": is_scam,
             "predicted_label": predicted_label,
             "predicted_class": LABEL_NAMES.get(predicted_label, f"Class {predicted_label}"),
-            "confidence": round(confidence, 4),
-            "confidence_percentage": f"{round(confidence * 100, 2)}%",
+            "confidence": round(pred_confidence, 4),
+            "confidence_percentage": f"{round(pred_confidence * 100, 2)}%",
+            "threat_score": round(scam_prob, 4),
+            "threat_score_percentage": f"{round(scam_prob * 100, 2)}%",
+            "is_borderline": is_borderline,
             "decision_margin": decision_margin,
             "risk_level": risk_level,
             "score_type": score_type,
@@ -272,46 +283,55 @@ class ScamDetectorService:
         if has_proba:
             probas = self.pipeline.predict_proba(processed_texts)[:, 1]
             margins = [None] * len(processed_texts)
-            confidences = probas.tolist()
+            scam_probs = probas.tolist()
             score_type = "predict_proba"
         elif has_decision:
             raw_margins = np.ravel(self.pipeline.decision_function(processed_texts))
             margins = [round(float(m), 4) for m in raw_margins]
-            confidences = (1.0 / (1.0 + np.exp(-raw_margins))).tolist()
+            scam_probs = (1.0 / (1.0 + np.exp(-raw_margins))).tolist()
             score_type = "calibrated_sigmoid"
         else:
             margins = [None] * len(processed_texts)
-            confidences = [1.0 if p == 1 else 0.0 for p in predictions]
+            scam_probs = [1.0 if p == 1 else 0.0 for p in predictions]
             score_type = "binary_hard_assignment"
 
         results = []
         scam_count = 0
 
-        for idx, (text, pred, conf, margin) in enumerate(zip(processed_texts, predictions, confidences, margins)):
+        for idx, (text, pred, s_prob, margin) in enumerate(zip(processed_texts, predictions, scam_probs, margins)):
             label = int(pred)
             is_scam = (label == 1)
             if is_scam:
                 scam_count += 1
 
-            bounded_conf = max(0.001, min(0.999, float(conf)))
-            
-            if bounded_conf >= 0.75:
+            bounded_prob = max(0.001, min(0.999, float(s_prob)))
+            indicators = self._extract_indicators(text)
+
+            is_borderline = False
+            if abs(margin if margin is not None else 0.0) < 0.15 and len(indicators) == 0:
+                is_borderline = True
+                risk_level = "BORDERLINE_UNCERTAIN"
+            elif bounded_prob >= 0.75:
                 risk_level = "HIGH_RISK"
-            elif bounded_conf >= 0.50:
+            elif bounded_prob >= 0.50:
                 risk_level = "SUSPICIOUS"
-            elif bounded_conf >= 0.25:
+            elif bounded_prob >= 0.25:
                 risk_level = "LOW_RISK"
             else:
                 risk_level = "SAFE_LEGITIMATE"
 
-            indicators = self._extract_indicators(text)
+            pred_conf = bounded_prob if is_scam else (1.0 - bounded_prob)
+            pred_conf = max(0.50, min(0.999, pred_conf))
 
             results.append({
                 "is_scam": is_scam,
                 "predicted_label": label,
                 "predicted_class": LABEL_NAMES.get(label, f"Class {label}"),
-                "confidence": round(bounded_conf, 4),
-                "confidence_percentage": f"{round(bounded_conf * 100, 2)}%",
+                "confidence": round(pred_conf, 4),
+                "confidence_percentage": f"{round(pred_conf * 100, 2)}%",
+                "threat_score": round(bounded_prob, 4),
+                "threat_score_percentage": f"{round(bounded_prob * 100, 2)}%",
+                "is_borderline": is_borderline,
                 "decision_margin": margin,
                 "risk_level": risk_level,
                 "score_type": score_type,

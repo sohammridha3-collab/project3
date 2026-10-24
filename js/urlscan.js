@@ -221,6 +221,21 @@
       } else if (err.status === 408 || (err.message && err.message.includes("Render"))) {
         resErrorTitle.textContent = "Backend Connection Timeout";
         resErrorMessage.textContent = "The server took too long to respond. The Render free-tier cloud backend may be waking up from sleep. Please click 'Try Again' now that the backend is awake.";
+      } else if (!err.status || err.status === 0) {
+        // Probe health endpoint to distinguish cold-start / redeployment from network outage
+        let isBackendOnline = false;
+        try {
+          const healthRes = await fetch(window.ScamShield.buildApiUrl("/health"), { method: "GET", signal: AbortSignal.timeout(3000) });
+          isBackendOnline = healthRes.ok;
+        } catch (_) {}
+
+        if (isBackendOnline) {
+          resErrorTitle.textContent = "Backend Endpoint Redeployment Pending";
+          resErrorMessage.textContent = "The cloud backend is online, but the URL Scanner endpoint is not active yet on Render. Please trigger 'Manual Deploy' -> 'Deploy latest commit' in your Render dashboard.";
+        } else {
+          resErrorTitle.textContent = "Backend Cold Start / Connection Error";
+          resErrorMessage.textContent = "Could not establish connection to the cloud backend. If hosted on Render free tier, the instance may be waking up from sleep (takes 30-50s). Please try again shortly.";
+        }
       } else {
         resErrorTitle.textContent = "Inspection Request Failed";
         resErrorMessage.textContent = err.detail || err.message || "Failed to inspect website. Please verify your connection and try again.";

@@ -251,21 +251,35 @@
     resLatency.textContent = `${elapsedMs} ms latency`;
 
     // Verdict Banner
-    if (data.is_scam) {
+    if (data.is_borderline || data.risk_level === "BORDERLINE_UNCERTAIN") {
+      resBanner.className = "verdict-box";
+      resBanner.style.borderColor = "rgba(245, 158, 11, 0.5)";
+      resBanner.style.background = "rgba(245, 158, 11, 0.08)";
+      resIcon.textContent = "⚠️";
+      resTitle.textContent = "Borderline / Uncertain Signal";
+      resSubtitle.textContent = "Message is close to the linear decision boundary with no overt fraud keywords detected. Caution advised.";
+    } else if (data.is_scam) {
       resBanner.className = "verdict-box scam";
+      resBanner.style.borderColor = "";
+      resBanner.style.background = "";
       resIcon.textContent = "🚨";
       resTitle.textContent = "Scam / Phishing Detected";
       resSubtitle.textContent = "High probability of malicious intent, credential theft, or fraud.";
     } else {
       resBanner.className = "verdict-box safe";
+      resBanner.style.borderColor = "";
+      resBanner.style.background = "";
       resIcon.textContent = "✅";
       resTitle.textContent = "Legitimate Message";
       resSubtitle.textContent = "Message pattern is consistent with standard, non-malicious communication.";
     }
 
     // Score meter
-    const pct = Math.round(data.confidence * 100);
-    resScorePct.textContent = `${pct}%`;
+    const threatVal = (data.threat_score !== undefined && data.threat_score !== null)
+      ? data.threat_score
+      : (data.is_scam ? data.confidence : (1.0 - data.confidence));
+    const pct = Math.round(threatVal * 100);
+    resScorePct.textContent = data.threat_score_percentage || `${pct}%`;
     resMeterFill.style.width = `${pct}%`;
     resMeterFill.style.background = data.is_scam
       ? "linear-gradient(90deg, #F59E0B, #EF4444)"

@@ -512,6 +512,61 @@ class TestScamShieldFullStack(unittest.TestCase):
         self.assertTrue(data.get("database_connected"))
         self.assertIn(data.get("database_engine"), ["sqlite", "postgresql"])
 
+    def test_18_callscam_silence_detection(self):
+        """Verify CallScam truthfully identifies pure silence as inconclusive rather than false clean/scam."""
+        import numpy as np
+        # 2 seconds of pure acoustic silence (16kHz 16-bit PCM)
+        silence_bytes = self.create_mock_wav_bytes(duration_sec=2.0)
+        res = self.client.post(
+            "/api/callscam/analyze",
+            files={"file": ("silence_test.wav", silence_bytes, "audio/wav")}
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertFalse(data["is_scam"])
+        self.assertEqual(data["risk_level"], "INCONCLUSIVE")
+        self.assertEqual(data["predicted_class"], "Inconclusive: Silence Detected")
+        self.assertIn("Silence Detected", data["audio_status"])
+        self.assertEqual(data["confidence"], 0.0)
+
+    def test_19_borderline_prediction_uncertainty(self):
+        """Verify borderline predictions (|z| < 0.15 without indicators) are flagged as uncertain."""
+        res = self.client.post("/predict", json={"text": "Hello Mom, are we meeting at 7pm?"})
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data.get("is_borderline"))
+        self.assertEqual(data.get("risk_level"), "BORDERLINE_UNCERTAIN")
+
+    def test_20_cors_preflight_for_mobile_and_pages_dev(self):
+        """Verify browser CORS preflight (OPTIONS) succeeds for mobile Wi-Fi LAN IPs and Cloudflare Pages."""
+        for origin in ["http://192.168.1.100:5500", "http://10.0.0.5:8000", "https://scamshield.pages.dev"]:
+            res = self.client.options(
+                "/api/url-scan",
+                headers={
+                    "Origin": origin,
+                    "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "content-type"
+                }
+            )
+            self.assertEqual(res.status_code, 200, f"CORS preflight failed for {origin}")
+            self.assertEqual(res.headers.get("access-control-allow-origin"), origin)
+
+    def test_21_prediction_confidence_vs_threat_score(self):
+        """Verify legitimate messages report class-specific prediction confidence, not low scam probability."""
+        legit_text = (
+            "SUBJECT: Quarterly Strategy Review & Deck Slides "
+            "BODY: Hi team, please find attached the agenda and presentation deck for tomorrow morning's sync."
+        )
+        res = self.client.post("/predict", json={"text": legit_text})
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertFalse(data["is_scam"])
+        self.assertEqual(data["predicted_class"], "Legitimate / Ham")
+        # Class confidence must reflect probability of legitimate class (>= 0.60)
+        self.assertGreaterEqual(data["confidence"], 0.60)
+        # Threat score must reflect low likelihood of scam (<= 0.40)
+        self.assertLessEqual(data["threat_score"], 0.40)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -141,13 +141,25 @@ class PredictionResult(BaseModel):
         ...,
         description="Formatted confidence percentage string (e.g., '94.5%')."
     )
+    threat_score: Optional[float] = Field(
+        default=None,
+        description="Calibrated threat likelihood probability score between 0.0 and 1.0."
+    )
+    threat_score_percentage: Optional[str] = Field(
+        default=None,
+        description="Formatted threat likelihood percentage string (e.g., '94.5%')."
+    )
+    is_borderline: Optional[bool] = Field(
+        default=False,
+        description="True if model decision margin is close to hyperplane boundary (|z| < 0.15) with no overt scam patterns."
+    )
     decision_margin: Optional[float] = Field(
         default=None,
         description="Raw decision boundary distance from LinearSVC (> 0 indicates scam class)."
     )
     risk_level: str = Field(
         ...,
-        description="Categorical risk rating: 'HIGH_RISK', 'SUSPICIOUS', 'LOW_RISK', or 'SAFE_LEGITIMATE'."
+        description="Categorical risk rating: 'HIGH_RISK', 'SUSPICIOUS', 'BORDERLINE_UNCERTAIN', 'LOW_RISK', or 'SAFE_LEGITIMATE'."
     )
     score_type: str = Field(
         ...,

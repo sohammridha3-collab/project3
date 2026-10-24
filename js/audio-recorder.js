@@ -255,7 +255,13 @@
       } catch (err) {
         this.cleanup();
         if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-          throw new Error("Microphone access was denied. Please grant microphone permission in your browser to record audio.");
+          throw new Error("Microphone access was denied. Please allow microphone permissions in your browser settings to record audio.");
+        } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+          throw new Error("No microphone device was detected. Please connect a microphone or upload a recorded audio file.");
+        } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+          throw new Error("Microphone is currently occupied by another phone call or app. Please close other audio apps and try again.");
+        } else if (window.location.protocol !== "https:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+          throw new Error("Microphone access requires a secure HTTPS connection in modern mobile browsers. Please access via HTTPS or upload a file.");
         }
         throw err;
       }

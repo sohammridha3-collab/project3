@@ -4,10 +4,12 @@ High-performance, SSRF-protected, bounded-deadline URL and website security anal
 Performs concurrent safe probing, TLS inspection, redirect tracking, and heuristic risk classification.
 """
 
+import os
+os.environ.setdefault("LOKY_MAX_CPU_COUNT", "4")
+
 import concurrent.futures
 import ipaddress
 import logging
-import os
 import re
 import socket
 import ssl
@@ -25,10 +27,10 @@ logger = logging.getLogger("scamshield.url_scanner")
 # -----------------------------------------------------------------------------
 
 ALLOWED_SCHEMES = {"http", "https"}
-TOTAL_SCAN_DEADLINE_SECONDS = 3.5
-DNS_TIMEOUT_SECONDS = 1.2
-SOCKET_CONNECT_TIMEOUT_SECONDS = 1.2
-READ_TIMEOUT_SECONDS = 1.2
+TOTAL_SCAN_DEADLINE_SECONDS = 6.5
+DNS_TIMEOUT_SECONDS = 1.8
+SOCKET_CONNECT_TIMEOUT_SECONDS = 2.5
+READ_TIMEOUT_SECONDS = 2.5
 MAX_REDIRECTS = 3
 MAX_RESPONSE_BYTES = 16384  # 16 KB response cap
 MAX_URL_LENGTH = 2048
@@ -1269,7 +1271,7 @@ def scan_url(raw_url: str, deadline: float = TOTAL_SCAN_DEADLINE_SECONDS, fast_s
                 components["punycode_host"],
                 components["port"],
                 primary_ip,
-                min(remaining_time, 2.0)
+                min(remaining_time, 4.0)
             )
 
         # Task B: Controlled Redirect & HTTP Reachability Probe
@@ -1286,13 +1288,16 @@ def scan_url(raw_url: str, deadline: float = TOTAL_SCAN_DEADLINE_SECONDS, fast_s
         intel_future = executor.submit(
             check_threat_intelligence,
             normalized_url,
-            min(remaining_time, 2.0)
+            min(remaining_time, 3.5)
         )
+
+        deadline_time = t_start + remaining_time + 0.5
 
         # Gather TLS
         if tls_future:
+            wait_left = max(0.1, deadline_time - time.perf_counter())
             try:
-                tls_info = tls_future.result(timeout=remaining_time + 0.2)
+                tls_info = tls_future.result(timeout=wait_left)
             except Exception as e:
                 tls_info = {
                     "inspected": False,
@@ -1303,8 +1308,9 @@ def scan_url(raw_url: str, deadline: float = TOTAL_SCAN_DEADLINE_SECONDS, fast_s
 
         # Gather Probe
         if probe_future:
+            wait_left = max(0.1, deadline_time - time.perf_counter())
             try:
-                probe_res = probe_future.result(timeout=remaining_time + 0.2)
+                probe_res = probe_future.result(timeout=wait_left)
             except Exception as e:
                 probe_res = {
                     "status_code": None,
@@ -1318,8 +1324,9 @@ def scan_url(raw_url: str, deadline: float = TOTAL_SCAN_DEADLINE_SECONDS, fast_s
 
         # Gather Intel
         if intel_future:
+            wait_left = max(0.1, deadline_time - time.perf_counter())
             try:
-                threat_intel = intel_future.result(timeout=remaining_time + 0.2)
+                threat_intel = intel_future.result(timeout=wait_left)
             except Exception as e:
                 threat_intel = {
                     "configured": True,

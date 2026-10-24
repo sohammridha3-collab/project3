@@ -1,7 +1,11 @@
 import time
+from url_model_service import get_url_model_service
 from url_scanner_service import scan_url, SsrfBlockError
 
 def run_speed_accuracy_tests():
+    # Warm up models once at startup (matching FastAPI lifespan behavior)
+    get_url_model_service().load_model()
+
     tests = [
         ("https://www.wikipedia.org", "Legitimate HTTPS"),
         ("http://example.com:81", "Slow / packet dropping port"),

@@ -528,8 +528,8 @@
       callBanner.style.borderColor = "rgba(148, 163, 184, 0.4)";
       callBanner.style.background = "rgba(148, 163, 184, 0.1)";
       callIcon.textContent = "ℹ️";
-      callTitle.textContent = "Inconclusive / No Clear Speech Detected";
-      callSubtitle.textContent = "Audio did not contain recognizable speech words in English, Hindi, or Bengali.";
+      callTitle.textContent = data.predicted_class || "Inconclusive / No Clear Speech Detected";
+      callSubtitle.textContent = data.audio_status || "Audio did not contain recognizable speech words in English, Hindi, or Bengali.";
       callRiskBadge.style.background = "rgba(148, 163, 184, 0.2)";
       callRiskBadge.style.color = "#CBD5E1";
       callRiskBadge.style.borderColor = "rgba(148, 163, 184, 0.4)";

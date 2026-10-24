@@ -3,8 +3,11 @@ FastAPI Backend for ScamShield AI — Intelligent Scam Message Detection System
 Full-stack REST API with Model Inference, Authentication, Scan History, PDF Reports, and Static File Serving.
 """
 
-import asyncio
 import os
+# Suppress Loky CPU core count detection error on Windows/cloud environments
+os.environ.setdefault("LOKY_MAX_CPU_COUNT", "4")
+
+import asyncio
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -123,7 +126,11 @@ if cors_has_wildcard:
 else:
     cors_kwargs["allow_origins"] = cors_origins_to_use
     cors_kwargs["allow_credentials"] = True
-    cors_kwargs["allow_origin_regex"] = r"https?://(localhost|127\.0\.0\.1|.*\.onrender\.com|.*\.railway\.app|.*\.vercel\.app|.*\.netlify\.app|.*\.github\.io)(:\d+)?"
+    cors_kwargs["allow_origin_regex"] = (
+        r"https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|"
+        r"192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|"
+        r".*\.onrender\.com|.*\.railway\.app|.*\.vercel\.app|.*\.netlify\.app|.*\.pages\.dev|.*\.github\.io)(:\d+)?"
+    )
 
 app.add_middleware(CORSMiddleware, **cors_kwargs)
 
@@ -324,6 +331,13 @@ async def predict_batch(payload: BatchMessageInput):
 # =============================================================================
 # URL & WEBSITE SCANNER ENDPOINT (SSRF-PROTECTED)
 # =============================================================================
+
+@app.options("/url-scan", tags=["URL Scanner"])
+@app.options("/api/url-scan", tags=["URL Scanner"])
+async def options_url_scan():
+    """Responds to browser CORS preflight checks for the URL scanner."""
+    return Response(status_code=status.HTTP_200_OK)
+
 
 @app.post("/url-scan", response_model=UrlScanResponse, tags=["URL Scanner"])
 @app.post("/api/url-scan", response_model=UrlScanResponse, tags=["URL Scanner"])

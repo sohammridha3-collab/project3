@@ -163,50 +163,148 @@ def get_wav_duration_seconds(file_path: str) -> Optional[float]:
     return None
 
 
-def boost_and_normalize_wav(wav_path: str, target_peak: int = 28000, max_gain: float = 15.0) -> float:
+class TranscriptionResult(tuple):
     """
-    Amplifies and normalizes low-volume speech and call recordings so STT can accurately detect words.
+    Subclass of 3-tuple (transcript, lang_code, lang_name) preserving exact backward compatibility
+    with existing callers and test mocks while attaching status and acoustic metadata.
+    """
+    def __new__(cls, transcript: str, lang_code: str, lang_name: str, status: str = "SUCCESS", metrics: Optional[Dict[str, Any]] = None):
+        inst = super().__new__(cls, (transcript, lang_code, lang_name))
+        inst.transcript = transcript
+        inst.lang_code = lang_code
+        inst.lang_name = lang_name
+        inst.status = status
+        inst.metrics = metrics or {}
+        return inst
+
+
+def measure_audio_energy(wav_path: str) -> Dict[str, Any]:
+    """
+    Analyzes acoustic properties of 16-bit PCM WAV audio.
+    Computes RMS energy, peak amplitude, 99.5th percentile energy, and silence categorization.
+    """
+    default_metrics = {
+        "duration_seconds": 0.0,
+        "rms_energy": 0.0,
+        "peak_amplitude": 0,
+        "percentile_99_5": 0.0,
+        "is_silent": True,
+        "is_low_volume": False,
+        "gain_applied": 1.0
+    }
+    try:
+        with wave.open(wav_path, "rb") as wf:
+            params = wf.getparams()
+            sampwidth = params.sampwidth
+            framerate = params.framerate
+            n_frames = params.nframes
+            raw_bytes = wf.readframes(n_frames)
+
+        duration = round(n_frames / float(framerate), 2) if framerate > 0 else 0.0
+        default_metrics["duration_seconds"] = duration
+
+        if sampwidth == 2 and n_frames > 0:
+            data = np.frombuffer(raw_bytes, dtype=np.int16)
+            if len(data) == 0:
+                return default_metrics
+
+            abs_data = np.abs(data.astype(np.float64))
+            rms = float(np.sqrt(np.mean(abs_data ** 2)))
+            peak = int(np.max(abs_data))
+            p99_5 = float(np.percentile(abs_data, 99.5))
+
+            # Silence threshold: RMS < 35 and peak < 150
+            is_silent = bool(rms < 35.0 and peak < 150)
+            is_low_volume = bool(not is_silent and (rms < 850.0 or p99_5 < 3000.0))
+
+            return {
+                "duration_seconds": duration,
+                "rms_energy": round(rms, 1),
+                "peak_amplitude": peak,
+                "percentile_99_5": round(p99_5, 1),
+                "is_silent": is_silent,
+                "is_low_volume": is_low_volume,
+                "gain_applied": 1.0
+            }
+    except Exception as exc:
+        logger.warning(f"Audio energy measurement warning: {exc}")
+    return default_metrics
+
+
+def boost_and_normalize_wav(wav_path: str, target_rms: float = 3500.0, max_gain: float = 15.0) -> float:
+    """
+    Amplifies and normalizes low-volume speech and call recordings without clipping distortion.
+    Uses percentile-aware gain scaling (target RMS with p99.5 headroom bound) and smooth soft-knee compression.
     Returns the gain factor applied.
     """
     try:
+        metrics = measure_audio_energy(wav_path)
+        if metrics.get("is_silent", False):
+            logger.info("Audio is acoustic silence; skipping amplification.")
+            return 1.0
+
         with wave.open(wav_path, "rb") as wf:
             params = wf.getparams()
             sampwidth = params.sampwidth
             n_frames = params.nframes
             raw_bytes = wf.readframes(n_frames)
 
-        if sampwidth == 2 and n_frames > 0:  # 16-bit PCM
+        if sampwidth == 2 and n_frames > 0:
             data = np.frombuffer(raw_bytes, dtype=np.int16)
             if len(data) == 0:
                 return 1.0
 
-            max_val = int(np.max(np.abs(data)))
-            # If the recording is quiet but contains sound (peak > 40)
-            if 40 < max_val < target_peak:
-                gain = min(target_peak / float(max_val), max_gain)
-                if gain > 1.08:
-                    boosted = np.clip(data.astype(np.float32) * gain, -32768, 32767).astype(np.int16)
-                    with wave.open(wav_path, "wb") as wf:
-                        wf.setparams(params)
-                        wf.writeframes(boosted.tobytes())
-                    logger.info(f"Boosted quiet audio by {gain:.2f}x (peak {max_val} -> {target_peak})")
-                    return gain
+            rms = metrics.get("rms_energy", 100.0)
+            p99_5 = metrics.get("percentile_99_5", 500.0)
+
+            # Target RMS around 3500 (approx -18 dBFS), constrained by 99.5th percentile to prevent loud spikes
+            gain_rms = target_rms / max(rms, 1.0)
+            gain_peak = 26000.0 / max(p99_5, 1.0)
+            gain = min(gain_rms, gain_peak, max_gain)
+
+            if gain > 1.05:
+                scaled = data.astype(np.float64) * gain
+                # Soft-knee compression for any transient spikes exceeding 26000
+                threshold = 26000.0
+                ceiling = 32000.0
+                over = np.abs(scaled) > threshold
+                if np.any(over):
+                    sign = np.sign(scaled[over])
+                    mag = np.abs(scaled[over])
+                    compressed = threshold + (ceiling - threshold) * np.tanh((mag - threshold) / (ceiling - threshold))
+                    scaled[over] = sign * compressed
+
+                boosted = np.clip(scaled, -32768, 32767).astype(np.int16)
+                with wave.open(wav_path, "wb") as wf:
+                    wf.setparams(params)
+                    wf.writeframes(boosted.tobytes())
+                logger.info(f"Boosted quiet audio by {gain:.2f}x (RMS {rms} -> {target_rms}) with soft limiting")
+                return round(gain, 2)
     except Exception as exc:
         logger.warning(f"Audio volume boost warning: {exc}")
     return 1.0
 
 
-def transcribe_audio_file(wav_path: str, language_hint: str = "auto") -> Tuple[str, str, str]:
+def transcribe_audio_file(wav_path: str, language_hint: str = "auto") -> TranscriptionResult:
     """
     Transcribes audio using SpeechRecognition with automatic or requested language routing.
-    Includes adaptive low-volume audio amplification and multi-language fallbacks.
-    Returns: (transcript_text, detected_lang_code, language_name)
+    Distinguishes silence, unintelligible speech, and network connection errors.
+    Returns: TranscriptionResult(transcript, detected_lang_code, language_name, status, metrics)
     """
-    # 1. Pre-amplify quiet audio if needed
-    boost_and_normalize_wav(wav_path)
+    # 1. Pre-analyze audio metrics and pre-amplify quiet audio if needed
+    gain = boost_and_normalize_wav(wav_path)
+    metrics = measure_audio_energy(wav_path)
+    metrics["gain_applied"] = gain
+
+    used_lang_code = language_hint if language_hint in ("hi", "bn", "en") else "en"
+    used_lang_name = SUPPORTED_LANGUAGES.get(used_lang_code, {}).get("name", "English")
+
+    if metrics.get("is_silent", False):
+        logger.info("Recording is silent; returning SILENCE status.")
+        return TranscriptionResult("", used_lang_code, used_lang_name, status="SILENCE", metrics=metrics)
 
     recognizer = sr.Recognizer()
-    recognizer.energy_threshold = 120
+    recognizer.energy_threshold = 100
     recognizer.dynamic_energy_threshold = True
     recognizer.dynamic_energy_adjustment_damping = 0.15
     recognizer.dynamic_energy_ratio = 1.5
@@ -215,7 +313,8 @@ def transcribe_audio_file(wav_path: str, language_hint: str = "auto") -> Tuple[s
         with sr.AudioFile(wav_path) as source:
             audio_data = recognizer.record(source)
     except Exception as exc:
-        raise ValueError(f"Audio format decoding error: {str(exc)}. Ensure the file is uncorrupted PCM WAV.")
+        logger.error(f"Audio format decoding error: {exc}")
+        return TranscriptionResult("", used_lang_code, used_lang_name, status="DECODE_ERROR", metrics=metrics)
 
     # Candidate languages with Indian English (en-IN) priority
     if language_hint == "hi":
@@ -229,16 +328,13 @@ def transcribe_audio_file(wav_path: str, language_hint: str = "auto") -> Tuple[s
         languages_to_try = ["en-IN", "en-US", "hi-IN", "bn-IN"]
 
     transcript = ""
-    used_lang_code = "en"
-    used_lang_name = "English"
+    had_network_error = False
 
-    last_error = None
     for lang in languages_to_try:
         try:
             candidate = recognizer.recognize_google(audio_data, language=lang)
             if candidate and candidate.strip():
                 transcript = candidate.strip()
-                # Determine language from script of the result
                 det_code, det_name = detect_script_language(transcript)
                 if language_hint in ("hi", "bn"):
                     used_lang_code = language_hint
@@ -250,17 +346,18 @@ def transcribe_audio_file(wav_path: str, language_hint: str = "auto") -> Tuple[s
         except sr.UnknownValueError:
             continue
         except sr.RequestError as req_err:
-            last_error = req_err
+            logger.warning(f"Google Speech Recognition network request error for {lang}: {req_err}")
+            had_network_error = True
             break
         except Exception as e:
-            last_error = e
+            logger.warning(f"Speech recognition exception for {lang}: {e}")
 
-    if not transcript:
-        if last_error:
-            logger.warning(f"Speech recognition network request failed: {last_error}")
-        return "", used_lang_code, used_lang_name
-
-    return transcript, used_lang_code, used_lang_name
+    if transcript:
+        return TranscriptionResult(transcript, used_lang_code, used_lang_name, status="SUCCESS", metrics=metrics)
+    elif had_network_error:
+        return TranscriptionResult("", used_lang_code, used_lang_name, status="NETWORK_ERROR", metrics=metrics)
+    else:
+        return TranscriptionResult("", used_lang_code, used_lang_name, status="UNINTELLIGIBLE", metrics=metrics)
 
 
 def scan_multilingual_indicators(text: str, lang_code: str) -> List[str]:
@@ -394,7 +491,12 @@ def analyze_call_audio(
     duration = get_wav_duration_seconds(wav_path)
 
     # 1. Transcribe speech
-    transcript, lang_code, lang_name = transcribe_audio_file(wav_path, language_hint)
+    transcribe_res = transcribe_audio_file(wav_path, language_hint)
+    transcript = transcribe_res[0]
+    lang_code = transcribe_res[1]
+    lang_name = transcribe_res[2]
+    status = getattr(transcribe_res, "status", "SUCCESS" if transcript else "UNINTELLIGIBLE")
+    metrics = getattr(transcribe_res, "metrics", None) or measure_audio_energy(wav_path)
 
     # Fallback to transcript_hint if STT didn't recognize speech (e.g. preset tone sample or low audio)
     if not transcript or not transcript.strip():
@@ -403,31 +505,58 @@ def analyze_call_audio(
             det_code, det_name = detect_script_language(transcript)
             lang_code = language_hint if language_hint in ("hi", "bn", "en") else det_code
             lang_name = SUPPORTED_LANGUAGES.get(lang_code, {}).get("name", det_name)
+            status = "SUCCESS"
 
-    # If still no speech detected, return an Inconclusive assessment
+    # If still no speech detected, return an honest Inconclusive assessment
     if not transcript or not transcript.strip():
         used_lang = language_hint if language_hint in ("hi", "bn", "en") else "en"
         used_name = SUPPORTED_LANGUAGES.get(used_lang, {}).get("name", "English")
+
+        if status == "SILENCE":
+            pred_class = "Inconclusive: Silence Detected"
+            audio_stat = "Silence Detected (No Audible Speech)"
+            inds = ["Silent or Muted Recording"]
+            recs = [
+                "The recording contains silence or ambient background noise without detectable speech.",
+                "Ensure microphone permissions are granted and speak within close range of your microphone.",
+                "If testing an ongoing phone call, note that browsers cannot intercept phone audio; upload a recorded audio file or enter the transcript."
+            ]
+        elif status == "NETWORK_ERROR":
+            pred_class = "Inconclusive: Transcription Service Unavailable"
+            audio_stat = "Speech Recognition Network Error"
+            inds = ["Speech-to-Text Network Timeout"]
+            recs = [
+                "The speech recognition cloud service could not be reached over the network.",
+                "Please verify your internet connection and re-run the audio analysis.",
+                "You can also paste the call conversation directly into the Message Analyzer to screen for fraud."
+            ]
+        else:
+            pred_class = "Inconclusive: Speech Unintelligible"
+            audio_stat = "Low Volume / Unintelligible Speech"
+            inds = ["Speech Unintelligible or Heavy Noise"]
+            recs = [
+                "Acoustic signal was detected, but specific speech words could not be recognized reliably.",
+                "Try recording again in a quieter room at a higher speaking volume.",
+                "You can also type or paste the spoken words into the Message Analyzer to test for fraud patterns."
+            ]
+
         return {
             "audio_filename": original_filename,
             "duration_seconds": duration,
-            "transcript": "[No clear speech detected in recording]",
+            "transcript": f"[{audio_stat}]",
             "translated_transcript": None,
             "detected_language": used_lang,
             "language_name": used_name,
             "is_scam": False,
-            "predicted_class": "Inconclusive / No Clear Speech Detected",
+            "predicted_class": pred_class,
             "confidence": 0.0,
             "confidence_percentage": "0.0%",
             "risk_level": "INCONCLUSIVE",
             "decision_margin": None,
-            "indicators_detected": ["Speech Unintelligible or Low Volume"],
-            "safety_recommendations": [
-                "The speech-to-text system could not identify intelligible speech words in this audio.",
-                "If recording via microphone, ensure microphone permissions are granted and speak clearly.",
-                "Always verify unexpected communications directly via verified official channels."
-            ],
-            "audio_status": "Inconclusive (No Speech Detected)"
+            "indicators_detected": inds,
+            "safety_recommendations": recs,
+            "audio_status": audio_stat,
+            "audio_metrics": metrics
         }
 
     # 2. Extract heuristic warning indicators
@@ -451,12 +580,12 @@ def analyze_call_audio(
             logger.warning(f"LinearSVC evaluation for call transcript failed: {exc}")
 
     # 4. Synthesize Defensible Threat Verdict
-    # High-confidence indicators + ML margin
     has_critical_indicators = len(indicators) >= 1
     ml_flagged = bool(ml_result and ml_result.get("is_scam", False))
 
     is_scam = has_critical_indicators or ml_flagged
-    confidence = ml_result["confidence"] if ml_result else (0.85 if has_critical_indicators else 0.15)
+    confidence = ml_result["confidence"] if ml_result else (0.85 if has_critical_indicators else 0.85)
+    threat_score = ml_result.get("threat_score", 0.85 if is_scam else 0.15) if ml_result else (0.85 if is_scam else 0.15)
 
     if is_scam:
         risk_level = "HIGH_RISK" if len(indicators) >= 2 else "MEDIUM_RISK"
@@ -482,9 +611,12 @@ def analyze_call_audio(
         "predicted_class": predicted_class,
         "confidence": confidence,
         "confidence_percentage": confidence_pct,
+        "threat_score": threat_score,
+        "threat_score_percentage": f"{round(threat_score * 100, 1)}%",
         "risk_level": risk_level,
         "decision_margin": ml_result.get("decision_margin") if ml_result else None,
         "indicators_detected": indicators,
         "safety_recommendations": recommendations,
-        "audio_status": "Transcribed & Analyzed"
+        "audio_status": "Transcribed & Analyzed",
+        "audio_metrics": metrics
     }

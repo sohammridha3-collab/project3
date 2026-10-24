@@ -74,6 +74,15 @@ if (typeof window !== "undefined") {
         // If served by local dev server (Live Server on 5500, Vite on 5173, etc.)
         return "http://127.0.0.1:8001";
       }
+
+      // 4b. Local Wi-Fi / Private LAN IP mobile testing (e.g., 192.168.x.x, 10.x.x.x)
+      const isPrivateNetwork = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(hostname);
+      if (isPrivateNetwork) {
+        if (port === "8001" || port === "8000") {
+          return origin;
+        }
+        return `http://${hostname}:8001`;
+      }
     }
 
     // 5. Default: Connect all deployed frontends directly to the deployed Render backend
