@@ -3,51 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cyber Defense Dashboard · ScamShield AI</title>
+  <title>Results · ScamShield AI</title>
   <meta name="description" content="Personal cybersecurity results with message scan analytics, threat breakdown, and quick actions.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="responsive.css">
-  <style>
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2.5rem;
-    }
-    .stat-card {
-      background: rgba(14, 6, 12, 0.85);
-      border: 1px solid rgba(255, 30, 67, 0.3);
-      border-radius: 4px;
-      padding: 1.5rem;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-      position: relative;
-      transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-    .stat-card:hover {
-      transform: translateY(-3px);
-      border-color: var(--neon-red);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.7), 0 0 20px rgba(255,30,67,0.25);
-    }
-    .stat-card .label {
-      font-family: var(--font-mono);
-      font-size: 0.76rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--neon-orange);
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    .stat-card .val {
-      font-family: var(--font-head);
-      font-size: 2.2rem;
-      font-weight: 900;
-      color: #FFFFFF;
-      letter-spacing: 0.03em;
-    }
-  </style>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -57,13 +19,12 @@
     <div class="page-header">
       <div class="wrap" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1.5rem;">
         <div>
-          <h1 id="welcome-msg">SECURITY OPERATIONS DASHBOARD</h1>
+          <h1 id="welcome-msg">Results</h1>
           <p id="user-email-subtitle">Personal Threat Analytics & Activity Overview</p>
         </div>
-        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-          <a href="urlscan.html" class="btn btn-primary btn-sm">🌐 Scan URL</a>
-          <a href="analyze.html" class="btn btn-orange btn-sm">💬 Screen Message</a>
-          <a href="history.html" class="btn btn-ghost btn-sm">📜 Full Audit Log</a>
+        <div style="display:flex; gap:0.75rem;">
+          <a href="analyze.html" class="btn btn-primary">⚡ Launch New Scan</a>
+          <a href="history.html" class="btn btn-ghost">📜 View All History</a>
         </div>
       </div>
     </div>

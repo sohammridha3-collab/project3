@@ -7,11 +7,11 @@
   <meta name="description" content="Screen suspicious website links, URLs, and web domains for phishing indicators, homoglyphs, TLS validity, and redirect manipulation with SSRF protection.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="responsive.css">
   <style>
-    /* Security Check Item Styles matching ScamShield Cyberpunk Theme */
+    /* Security Check Item Styles matching ScamShield theme */
     .checks-grid {
       display: flex;
       flex-direction: column;
@@ -19,19 +19,17 @@
       margin-top: 0.75rem;
     }
     .check-item {
-      background: rgba(14, 6, 12, 0.7);
-      border: 1px solid rgba(255, 30, 67, 0.25);
-      border-radius: 4px;
-      padding: 0.85rem 1.1rem;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--navy-border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
       display: flex;
       flex-direction: column;
       gap: 0.25rem;
-      transition: all 0.2s ease;
+      transition: border-color 0.2s ease;
     }
     .check-item:hover {
-      border-color: rgba(255, 30, 67, 0.55);
-      background: rgba(22, 8, 18, 0.85);
-      box-shadow: 0 0 15px rgba(255, 30, 67, 0.15);
+      border-color: rgba(139, 92, 246, 0.45);
     }
     .check-header {
       display: flex;
@@ -40,71 +38,68 @@
       gap: 0.5rem;
     }
     .check-name {
-      font-weight: 700;
+      font-weight: 600;
       font-size: 0.88rem;
-      color: #FFFFFF;
+      color: #E2E8F0;
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      font-family: var(--font-head);
-      letter-spacing: 0.03em;
     }
     .check-cat {
       font-size: 0.72rem;
-      color: var(--neon-orange);
-      font-weight: 600;
+      color: var(--text-dim);
+      font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      font-family: var(--font-mono);
     }
     .check-badge {
       font-size: 0.72rem;
       font-weight: 700;
-      padding: 0.25rem 0.65rem;
-      border-radius: 3px;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
       letter-spacing: 0.5px;
       text-transform: uppercase;
       font-family: var(--font-mono);
     }
     .check-badge.pass {
-      background: rgba(0, 230, 118, 0.15);
-      color: #8CF5BA;
-      border: 1px solid rgba(0, 230, 118, 0.4);
+      background: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
     }
     .check-badge.warning {
-      background: rgba(255, 179, 0, 0.15);
-      color: #FFE699;
-      border: 1px solid rgba(255, 179, 0, 0.4);
+      background: rgba(245, 158, 11, 0.15);
+      color: #FBBF24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
     }
     .check-badge.fail {
-      background: rgba(255, 30, 67, 0.18);
-      color: #FFA3B2;
-      border: 1px solid rgba(255, 30, 67, 0.5);
+      background: rgba(239, 68, 68, 0.15);
+      color: #F87171;
+      border: 1px solid rgba(239, 68, 68, 0.35);
     }
     .check-badge.info {
-      background: rgba(255, 106, 0, 0.15);
-      color: #FFD4A8;
-      border: 1px solid rgba(255, 106, 0, 0.4);
+      background: rgba(34, 211, 238, 0.15);
+      color: var(--cyan);
+      border: 1px solid rgba(34, 211, 238, 0.35);
     }
     .check-badge.unavailable {
-      background: rgba(148, 163, 184, 0.12);
+      background: rgba(148, 163, 184, 0.15);
       color: #94A3B8;
-      border: 1px solid rgba(148, 163, 184, 0.25);
+      border: 1px solid rgba(148, 163, 184, 0.3);
     }
     .check-detail {
+      font-size: 0.8rem;
+      color: #94A3B8;
+      line-height: 1.45;
+    }
+    .disclaimer-card {
+      background: var(--navy-card);
+      border-left: 3px solid var(--primary);
+      padding: 0.85rem 1rem;
+      border-radius: 4px;
+      margin-top: 1.25rem;
       font-size: 0.82rem;
       color: var(--text-muted);
       line-height: 1.5;
-    }
-    .disclaimer-card {
-      background: rgba(18, 6, 12, 0.8);
-      border-left: 3px solid var(--neon-red);
-      padding: 0.95rem 1.15rem;
-      border-radius: 4px;
-      margin-top: 1.25rem;
-      font-size: 0.84rem;
-      color: var(--text-muted);
-      line-height: 1.6;
     }
   </style>
 </head>
