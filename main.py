@@ -313,6 +313,7 @@ async def predict_batch(payload: BatchMessageInput):
 # URL & WEBSITE SCANNER ENDPOINT (SSRF-PROTECTED)
 # =============================================================================
 
+@app.post("/url-scan", response_model=UrlScanResponse, tags=["URL Scanner"])
 @app.post("/api/url-scan", response_model=UrlScanResponse, tags=["URL Scanner"])
 async def scan_website_url(
     payload: UrlScanRequest,
