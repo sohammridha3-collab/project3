@@ -373,6 +373,7 @@ class UrlSecurityCheck(BaseModel):
     status: str = Field(..., description="Result status: pass, warning, fail, unavailable, info.")
     description: str = Field(..., description="Brief explanation of the check.")
     details: Optional[str] = Field(default=None, description="Observed evidence or diagnostic details.")
+    duration_ms: Optional[float] = Field(default=None, description="Execution time in milliseconds.")
 
 
 class UrlScanResponse(BaseModel):
@@ -392,6 +393,7 @@ class UrlScanResponse(BaseModel):
     redirect_info: Optional[Dict[str, Any]] = Field(default=None, description="Redirect trace and final landing page.")
     threat_intel_info: Optional[Dict[str, Any]] = Field(default=None, description="Threat reputation provider status.")
     resolved_ip: Optional[str] = Field(default=None, description="Resolved public IP address.")
+    scan_duration_ms: Optional[float] = Field(default=None, description="Total scan execution duration in milliseconds.")
     disclaimer: str = Field(
         default="Automated security checks evaluate observed technical indicators and heuristics. They cannot guarantee that a website is free from fraud, social engineering, or emerging threats.",
         description="Responsible disclosure disclaimer."

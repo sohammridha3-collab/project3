@@ -3,6 +3,7 @@ FastAPI Backend for ScamShield AI — Intelligent Scam Message Detection System
 Full-stack REST API with Model Inference, Authentication, Scan History, PDF Reports, and Static File Serving.
 """
 
+import asyncio
 import os
 import json
 import logging
@@ -336,7 +337,8 @@ async def scan_website_url(
         )
 
     try:
-        result = scan_url(payload.url.strip())
+        # Offload synchronous network inspection to worker thread to avoid blocking the asyncio event loop
+        result = await asyncio.to_thread(scan_url, payload.url.strip())
     except SsrfBlockError as ssrf_err:
         logger.warning(f"Blocked SSRF attempt: {ssrf_err}")
         raise HTTPException(
